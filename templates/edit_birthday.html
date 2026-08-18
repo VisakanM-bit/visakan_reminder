@@ -1,306 +1,497 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
 
-<meta charset="UTF-8">
+{% block title %}
+Edit Birthday | Bday Reminder
+{% endblock %}
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
 
-<title>Edit Birthday | Bday Reminder</title>
+{% block head %}
 
 <link
     rel="stylesheet"
-    href="{{ url_for('static', filename='css/reminder-theme.css') }}"
+    href="{{ url_for(
+        'static',
+        filename='css/reminder-theme.css'
+    ) }}"
 >
 
 <style>
 
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: "Segoe UI", Arial, sans-serif;
-}
-
-.app {
-    min-height: 100vh;
-}
+/* =====================================================
+   MAIN
+===================================================== */
 
 .main {
-    width: min(100% - 30px, 1050px);
+
+    width:
+        min(
+            calc(100% - 30px),
+            1050px
+        );
+
     margin: auto;
-    padding: 30px 0 60px;
+
+    padding:
+        30px 0 60px;
 }
 
 
-/* =========================================================
+/* =====================================================
    NAVBAR
-========================================================= */
+===================================================== */
 
 .navbar {
+
     position: sticky;
+
     top: 0;
+
     z-index: 100;
 
-    background: rgba(255,255,255,.88);
-    backdrop-filter: blur(18px);
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .88
+        );
 
-    border-bottom: 1px solid rgba(148,163,184,.25);
+    backdrop-filter:
+        blur(18px);
+
+    border-bottom:
+        1px solid
+        rgba(
+            148,
+            163,
+            184,
+            .25
+        );
 }
 
+
 .navbar-inner {
+
     max-width: 1200px;
+
     margin: auto;
 
-    padding: 12px 20px;
+    padding:
+        12px 20px;
 
     display: flex;
+
     align-items: center;
-    justify-content: space-between;
+
+    justify-content:
+        space-between;
+
     gap: 15px;
 }
 
+
 .brand {
+
     display: flex;
+
     align-items: center;
+
     gap: 9px;
 
     text-decoration: none;
+
     color: #172033;
+
     font-weight: 800;
 }
 
+
 .brand-icon {
+
     width: 40px;
     height: 40px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
     border-radius: 12px;
 
-    background: linear-gradient(
-        135deg,
-        #4f46e5,
-        #7c3aed
-    );
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        );
 
     color: white;
 }
 
+
 .nav-tabs {
+
     display: flex;
+
     gap: 5px;
 }
 
+
 .nav-tab {
+
     text-decoration: none;
+
     color: #64748b;
 
-    padding: 9px 13px;
+    padding:
+        9px 13px;
+
     border-radius: 9px;
 
     font-size: 13px;
+
     font-weight: 700;
 }
 
+
 .nav-tab.active {
+
     color: #4f46e5;
-    background: rgba(79,70,229,.10);
+
+    background:
+        rgba(
+            79,
+            70,
+            229,
+            .10
+        );
 }
 
+
 .nav-actions {
+
     display: flex;
+
     align-items: center;
+
     gap: 8px;
 }
 
+
 .theme-toggle {
+
     width: 40px;
     height: 40px;
 
-    border: 1px solid rgba(148,163,184,.3);
+    border:
+        1px solid
+        rgba(
+            148,
+            163,
+            184,
+            .3
+        );
+
     border-radius: 10px;
 
-    background: rgba(255,255,255,.75);
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .75
+        );
 
     cursor: pointer;
+
     font-size: 17px;
 }
 
+
 .logout {
+
     text-decoration: none;
+
     color: #dc2626;
 
     font-size: 13px;
+
     font-weight: 700;
 
-    padding: 9px 12px;
+    padding:
+        9px 12px;
+
     border-radius: 9px;
 
-    background: rgba(220,38,38,.08);
+    background:
+        rgba(
+            220,
+            38,
+            38,
+            .08
+        );
 }
 
 
-/* =========================================================
+/* =====================================================
    BREADCRUMB
-========================================================= */
+===================================================== */
 
 .breadcrumb {
+
     display: flex;
+
     align-items: center;
+
     flex-wrap: wrap;
+
     gap: 8px;
 
     margin-bottom: 20px;
 
     font-size: 13px;
+
     color: #64748b;
 }
 
+
 .breadcrumb a {
+
     color: #4f46e5;
+
     text-decoration: none;
+
     font-weight: 700;
 }
 
 
-/* =========================================================
+/* =====================================================
    HEADING
-========================================================= */
+===================================================== */
 
 .page-heading {
+
     margin-bottom: 22px;
 }
 
+
 .page-heading h1 {
+
     margin: 0;
 
     display: flex;
+
     align-items: center;
+
     gap: 12px;
 
-    font-size: clamp(28px, 5vw, 40px);
+    font-size:
+        clamp(
+            28px,
+            5vw,
+            40px
+        );
+
     color: #172033;
 }
 
+
 .heading-icon {
+
     width: 52px;
     height: 52px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
     border-radius: 15px;
 
-    background: rgba(255,255,255,.92);
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .92
+        );
 
     box-shadow:
-        0 12px 30px rgba(15,23,42,.12);
+        0 12px 30px
+        rgba(
+            15,
+            23,
+            42,
+            .12
+        );
 }
 
+
 .page-heading p {
-    margin: 8px 0 0;
+
+    margin:
+        8px 0 0;
 
     color: #64748b;
+
     font-size: 14px;
 }
 
 
-/* =========================================================
+/* =====================================================
    TIME SELECTOR
-========================================================= */
+===================================================== */
 
 .time-selector {
+
     display: flex;
+
     flex-wrap: wrap;
+
     gap: 8px;
 
     margin-bottom: 20px;
 }
 
+
 .time-option {
-    border: 1px solid rgba(148,163,184,.25);
 
-    background: rgba(255,255,255,.85);
+    border:
+        1px solid
+        rgba(
+            148,
+            163,
+            184,
+            .25
+        );
 
-    padding: 9px 13px;
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .85
+        );
+
+    padding:
+        9px 13px;
 
     border-radius: 10px;
 
     cursor: pointer;
 
     font-size: 12px;
+
     font-weight: 700;
 
     color: #334155;
+
+    transition: .2s;
 }
 
+
+.time-option:hover {
+
+    transform:
+        translateY(-1px);
+}
+
+
 .time-option.active {
-    background: #4f46e5;
+
+    background:
+        #4f46e5;
+
     color: white;
 }
 
 
-/* =========================================================
+/* =====================================================
    FORM CARD
-========================================================= */
+===================================================== */
 
 .form-card {
 
-    background: rgba(255,255,255,.94);
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .94
+        );
 
     border:
-        1px solid rgba(148,163,184,.25);
+        1px solid
+        rgba(
+            148,
+            163,
+            184,
+            .25
+        );
 
     border-radius: 22px;
 
     box-shadow:
-        0 25px 70px rgba(15,23,42,.14);
+        0 25px 70px
+        rgba(
+            15,
+            23,
+            42,
+            .14
+        );
 
     overflow: hidden;
 }
 
 
-/* =========================================================
+/* =====================================================
    FORM HEADER
-========================================================= */
+===================================================== */
 
 .form-header {
 
-    padding: 20px 24px;
+    padding:
+        20px 24px;
 
     border-bottom:
-        1px solid #e5e7eb;
+        1px solid
+        #e5e7eb;
 
     background:
         linear-gradient(
             135deg,
-            rgba(255,255,255,.98),
-            rgba(248,250,252,.94)
+            rgba(
+                255,
+                255,
+                255,
+                .98
+            ),
+            rgba(
+                248,
+                250,
+                252,
+                .94
+            )
         );
 }
+
 
 .section-title {
 
     display: flex;
+
     align-items: center;
+
     gap: 10px;
 
     font-size: 18px;
+
     font-weight: 800;
 
     color: #172033;
 }
+
 
 .section-icon {
 
@@ -308,6 +499,7 @@ body {
     height: 38px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -322,31 +514,45 @@ body {
 }
 
 
-/* =========================================================
+/* =====================================================
    FORM BODY
-========================================================= */
+===================================================== */
 
 .form-body {
+
     padding: 24px;
 }
+
 
 .form-grid {
 
     display: grid;
 
     grid-template-columns:
-        repeat(2, minmax(0,1fr));
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
 
     gap: 20px;
 }
 
+
 .form-group {
+
     min-width: 0;
 }
 
+
 .form-group.full {
-    grid-column: 1 / -1;
+
+    grid-column:
+        1 / -1;
 }
+
 
 .form-label {
 
@@ -357,8 +563,10 @@ body {
     color: #172033;
 
     font-size: 13px;
+
     font-weight: 800;
 }
+
 
 .optional {
 
@@ -367,31 +575,37 @@ body {
     color: #94a3b8;
 
     font-size: 11px;
+
     font-weight: 600;
 }
 
 
-/* =========================================================
-   INPUT
-========================================================= */
+/* =====================================================
+   INPUTS
+===================================================== */
 
 .input-wrapper {
+
     position: relative;
 }
+
 
 .input-icon {
 
     position: absolute;
 
     left: 13px;
+
     top: 50%;
 
-    transform: translateY(-50%);
+    transform:
+        translateY(-50%);
 
     font-size: 17px;
 
     pointer-events: none;
 }
+
 
 .form-input,
 .form-textarea {
@@ -399,13 +613,16 @@ body {
     width: 100%;
 
     border:
-        1px solid #dbe2ea;
+        1px solid
+        #dbe2ea;
 
     border-radius: 12px;
 
-    background: #ffffff;
+    background:
+        #ffffff;
 
-    color: #172033;
+    color:
+        #172033;
 
     font-size: 14px;
 
@@ -416,6 +633,7 @@ body {
         box-shadow .2s ease;
 }
 
+
 .form-input {
 
     height: 48px;
@@ -423,6 +641,7 @@ body {
     padding:
         0 14px 0 43px;
 }
+
 
 .form-textarea {
 
@@ -433,31 +652,43 @@ body {
     resize: vertical;
 }
 
+
 .form-input:focus,
 .form-textarea:focus {
 
-    border-color: #6366f1;
+    border-color:
+        #6366f1;
 
     box-shadow:
-        0 0 0 4px rgba(99,102,241,.10);
+        0 0 0 4px
+        rgba(
+            99,
+            102,
+            241,
+            .10
+        );
 }
 
 
-/* =========================================================
+/* =====================================================
    PREVIEW
-========================================================= */
+===================================================== */
 
 .preview-grid {
 
     display: grid;
 
     grid-template-columns:
-        repeat(3,1fr);
+        repeat(
+            4,
+            1fr
+        );
 
     gap: 12px;
 
     margin-top: 25px;
 }
+
 
 .preview-box {
 
@@ -473,13 +704,18 @@ body {
         );
 
     border:
-        1px solid #e2e8f0;
+        1px solid
+        #e2e8f0;
 }
 
+
 .preview-icon {
+
     font-size: 20px;
+
     margin-bottom: 8px;
 }
+
 
 .preview-label {
 
@@ -494,6 +730,7 @@ body {
     margin-bottom: 5px;
 }
 
+
 .preview-value {
 
     font-size: 14px;
@@ -506,28 +743,32 @@ body {
 }
 
 
-/* =========================================================
+/* =====================================================
    FOOTER
-========================================================= */
+===================================================== */
 
 .form-footer {
 
-    padding: 18px 24px;
+    padding:
+        18px 24px;
 
     display: flex;
 
-    justify-content: space-between;
+    justify-content:
+        space-between;
 
     align-items: center;
 
     gap: 15px;
 
     border-top:
-        1px solid #e5e7eb;
+        1px solid
+        #e5e7eb;
 
     background:
         #fafbfc;
 }
+
 
 .footer-note {
 
@@ -536,6 +777,7 @@ body {
     font-size: 12px;
 }
 
+
 .button-group {
 
     display: flex;
@@ -543,16 +785,19 @@ body {
     gap: 9px;
 }
 
+
 .button {
 
     display: inline-flex;
 
     align-items: center;
+
     justify-content: center;
 
     min-height: 44px;
 
-    padding: 0 17px;
+    padding:
+        0 17px;
 
     border-radius: 11px;
 
@@ -565,15 +810,19 @@ body {
     cursor: pointer;
 }
 
+
 .button-secondary {
 
     color: #475569;
 
-    background: #ffffff;
+    background:
+        #ffffff;
 
     border:
-        1px solid #dbe2ea;
+        1px solid
+        #dbe2ea;
 }
+
 
 .button-primary {
 
@@ -589,80 +838,142 @@ body {
         );
 
     box-shadow:
-        0 8px 20px rgba(79,70,229,.23);
+        0 8px 20px
+        rgba(
+            79,
+            70,
+            229,
+            .23
+        );
 }
 
 
-/* =========================================================
+/* =====================================================
    DARK MODE
-========================================================= */
+===================================================== */
 
 body.dark .navbar {
 
     background:
-        rgba(15,23,42,.88);
+        rgba(
+            15,
+            23,
+            42,
+            .88
+        );
 }
+
 
 body.dark .brand,
 body.dark .page-heading h1,
 body.dark .form-label,
 body.dark .section-title {
 
-    color: #f8fafc;
+    color:
+        #f8fafc;
 }
+
 
 body.dark .nav-tab {
-    color: #94a3b8;
+
+    color:
+        #94a3b8;
 }
 
+
 body.dark .nav-tab.active {
-    color: #a5b4fc;
+
+    color:
+        #a5b4fc;
 }
+
 
 body.dark .theme-toggle {
 
     background:
-        rgba(30,41,59,.8);
+        rgba(
+            30,
+            41,
+            59,
+            .8
+        );
 
     color: white;
 }
+
 
 body.dark .heading-icon {
 
     background:
-        rgba(30,41,59,.9);
+        rgba(
+            30,
+            41,
+            59,
+            .9
+        );
 
     color: white;
 }
 
+
 body.dark .time-option {
 
     background:
-        rgba(30,41,59,.88);
+        rgba(
+            30,
+            41,
+            59,
+            .88
+        );
 
-    color: #e2e8f0;
+    color:
+        #e2e8f0;
 }
+
 
 body.dark .form-card {
 
     background:
-        rgba(15,23,42,.94);
+        rgba(
+            15,
+            23,
+            42,
+            .94
+        );
 }
+
 
 body.dark .form-header {
 
     background:
-        rgba(30,41,59,.8);
+        rgba(
+            30,
+            41,
+            59,
+            .8
+        );
 
     border-color:
-        rgba(255,255,255,.08);
+        rgba(
+            255,
+            255,
+            255,
+            .08
+        );
 }
+
 
 body.dark .section-icon {
 
     background:
-        rgba(79,70,229,.2);
+        rgba(
+            79,
+            70,
+            229,
+            .2
+        );
 }
+
 
 body.dark .form-input,
 body.dark .form-textarea {
@@ -677,128 +988,191 @@ body.dark .form-textarea {
         #cbd5e1;
 }
 
+
 body.dark .preview-box {
 
     background:
-        rgba(255,255,255,.96);
+        rgba(
+            255,
+            255,
+            255,
+            .96
+        );
+}
+
+
+body.dark .preview-value {
 
     color:
         #172033;
 }
 
-body.dark .preview-value {
-    color: #172033;
-}
 
 body.dark .form-footer {
 
     background:
-        rgba(30,41,59,.75);
+        rgba(
+            30,
+            41,
+            59,
+            .75
+        );
 
     border-color:
-        rgba(255,255,255,.08);
+        rgba(
+            255,
+            255,
+            255,
+            .08
+        );
 }
+
 
 body.dark .footer-note {
-    color: #94a3b8;
+
+    color:
+        #94a3b8;
 }
 
 
-/* =========================================================
+/* =====================================================
    MOBILE
-========================================================= */
+===================================================== */
 
 @media (max-width: 800px) {
 
     .navbar-inner {
+
         flex-wrap: wrap;
     }
 
+
     .nav-tabs {
+
         order: 3;
+
         width: 100%;
+
         overflow-x: auto;
     }
 
+
     .form-grid {
-        grid-template-columns: 1fr;
+
+        grid-template-columns:
+            1fr;
     }
+
 
     .form-group.full {
-        grid-column: auto;
+
+        grid-column:
+            auto;
     }
+
 
     .preview-grid {
+
         grid-template-columns:
-            repeat(2,1fr);
+            repeat(
+                2,
+                1fr
+            );
     }
+
 
     .form-footer {
-        align-items: stretch;
-        flex-direction: column;
+
+        align-items:
+            stretch;
+
+        flex-direction:
+            column;
     }
+
 
     .button-group {
-        width: 100%;
+
+        width:
+            100%;
     }
 
+
     .button {
-        flex: 1;
+
+        flex:
+            1;
     }
+
 }
+
 
 @media (max-width: 520px) {
 
     .main {
-        width: calc(100% - 20px);
-        padding-top: 20px;
+
+        width:
+            calc(
+                100% - 20px
+            );
+
+        padding-top:
+            20px;
     }
+
 
     .navbar-inner {
-        padding: 10px 12px;
+
+        padding:
+            10px 12px;
     }
+
 
     .logout {
-        display: none;
+
+        display:
+            none;
     }
+
 
     .page-heading h1 {
-        font-size: 28px;
+
+        font-size:
+            28px;
     }
 
-    .form-body {
-        padding: 17px;
+
+    .form-body,
+    .form-header,
+    .form-footer {
+
+        padding:
+            17px;
     }
 
-    .form-header {
-        padding: 17px;
-    }
 
     .preview-grid {
-        grid-template-columns: 1fr 1fr;
+
+        grid-template-columns:
+            1fr 1fr;
     }
 
-    .preview-box {
-        padding: 13px;
-    }
-
-    .form-footer {
-        padding: 17px;
-    }
 
     .button-group {
-        flex-direction: column;
+
+        flex-direction:
+            column;
     }
 
 }
 
 </style>
 
-</head>
+{% endblock %}
 
 
-<body>
 
+{% block content %}
 
 <!-- =====================================================
      TIME BACKGROUND
@@ -814,6 +1188,7 @@ body.dark .footer-note {
     <div class="moon"></div>
 
     <div class="cloud cloud-1"></div>
+
     <div class="cloud cloud-2"></div>
 
     <div class="stars">
@@ -842,6 +1217,7 @@ body.dark .footer-note {
 </div>
 
 
+
 <div class="app">
 
 
@@ -852,6 +1228,7 @@ body.dark .footer-note {
 <nav class="navbar">
 
 <div class="navbar-inner">
+
 
 <a
     href="{{ url_for('home') }}"
@@ -869,7 +1246,9 @@ body.dark .footer-note {
 </a>
 
 
+
 <div class="nav-tabs">
+
 
 <a
     href="{{ url_for('home') }}"
@@ -878,12 +1257,14 @@ body.dark .footer-note {
     🏠 Dashboard
 </a>
 
+
 <a
     href="{{ url_for('birthdays') }}"
     class="nav-tab active"
 >
     🎂 Birthdays
 </a>
+
 
 <a
     href="{{ url_for('reminders') }}"
@@ -892,10 +1273,13 @@ body.dark .footer-note {
     ⏰ Reminders
 </a>
 
+
 </div>
 
 
+
 <div class="nav-actions">
+
 
 <button
     id="theme-toggle"
@@ -905,6 +1289,7 @@ body.dark .footer-note {
     🌙
 </button>
 
+
 <a
     href="{{ url_for('logout') }}"
     class="logout"
@@ -912,11 +1297,14 @@ body.dark .footer-note {
     Logout
 </a>
 
+
 </div>
+
 
 </div>
 
 </nav>
+
 
 
 <!-- =====================================================
@@ -930,26 +1318,44 @@ body.dark .footer-note {
 
 <div class="breadcrumb">
 
-<a href="{{ url_for('home') }}">
+
+<a
+    href="{{ url_for('home') }}"
+>
     Dashboard
 </a>
 
-<span>›</span>
 
-<a href="{{ url_for('birthdays') }}">
+<span>
+    ›
+</span>
+
+
+<a
+    href="{{ url_for('birthdays') }}"
+>
     Birthdays
 </a>
 
-<span>›</span>
 
-<span>Edit Birthday</span>
+<span>
+    ›
+</span>
+
+
+<span>
+    Edit Birthday
+</span>
+
 
 </div>
+
 
 
 <!-- HEADING -->
 
 <div class="page-heading">
+
 
 <h1>
 
@@ -961,16 +1367,22 @@ Edit Birthday
 
 </h1>
 
+
 <p>
 Update the birthday details and keep your important dates organized.
 </p>
 
+
 </div>
 
 
-<!-- TIME SELECTOR -->
+
+<!-- =====================================================
+     TIME SELECTOR
+===================================================== -->
 
 <div class="time-selector">
+
 
 <button
     class="time-option"
@@ -980,6 +1392,7 @@ Update the birthday details and keep your important dates organized.
     🔄 Auto
 </button>
 
+
 <button
     class="time-option"
     data-period="morning"
@@ -987,6 +1400,7 @@ Update the birthday details and keep your important dates organized.
 >
     🌅 Morning
 </button>
+
 
 <button
     class="time-option"
@@ -996,6 +1410,7 @@ Update the birthday details and keep your important dates organized.
     ☀️ Afternoon
 </button>
 
+
 <button
     class="time-option"
     data-period="evening"
@@ -1003,6 +1418,7 @@ Update the birthday details and keep your important dates organized.
 >
     🌇 Evening
 </button>
+
 
 <button
     class="time-option"
@@ -1012,10 +1428,14 @@ Update the birthday details and keep your important dates organized.
     🌙 Night
 </button>
 
+
 </div>
 
 
-<!-- FORM -->
+
+<!-- =====================================================
+     FORM
+===================================================== -->
 
 <form
     method="POST"
@@ -1027,20 +1447,30 @@ Update the birthday details and keep your important dates organized.
 >
 
 
+<!-- HEADER -->
+
 <div class="form-header">
 
+
 <div class="section-title">
+
 
 <span class="section-icon">
     🎂
 </span>
 
+
 Birthday Details
 
-</div>
 
 </div>
 
+
+</div>
+
+
+
+<!-- BODY -->
 
 <div class="form-body">
 
@@ -1048,9 +1478,12 @@ Birthday Details
 <div class="form-grid">
 
 
-<!-- NAME -->
+<!-- =================================================
+     NAME
+================================================== -->
 
 <div class="form-group">
+
 
 <label
     class="form-label"
@@ -1059,11 +1492,14 @@ Birthday Details
     Person's Name
 </label>
 
+
 <div class="input-wrapper">
+
 
 <span class="input-icon">
     👤
 </span>
+
 
 <input
     type="text"
@@ -1075,32 +1511,42 @@ Birthday Details
     required
 >
 
-</div>
 
 </div>
 
 
-<!-- RELATIONSHIP -->
+</div>
+
+
+
+<!-- =================================================
+     RELATIONSHIP
+================================================== -->
 
 <div class="form-group">
+
 
 <label
     class="form-label"
     for="relationship"
 >
+
     Relationship
 
-<span class="optional">
-    Optional
-</span>
+    <span class="optional">
+        Optional
+    </span>
 
 </label>
 
+
 <div class="input-wrapper">
+
 
 <span class="input-icon">
     ❤️
 </span>
+
 
 <input
     type="text"
@@ -1111,14 +1557,20 @@ Birthday Details
     placeholder="Friend, Brother, Sister..."
 >
 
-</div>
 
 </div>
 
 
-<!-- BIRTHDAY -->
+</div>
+
+
+
+<!-- =================================================
+     BIRTHDAY
+================================================== -->
 
 <div class="form-group">
+
 
 <label
     class="form-label"
@@ -1127,47 +1579,64 @@ Birthday Details
     Birthday
 </label>
 
+
 <div class="input-wrapper">
+
 
 <span class="input-icon">
     📅
 </span>
+
 
 <input
     type="date"
     id="birthday"
     name="birthday"
     class="form-input"
-    value="{{ birthday.birthday.strftime('%Y-%m-%d') }}"
+    value="{{
+        birthday.birthday.strftime('%Y-%m-%d')
+        if birthday.birthday
+        else ''
+    }}"
     required
 >
 
-</div>
 
 </div>
 
 
-<!-- PHONE -->
+</div>
+
+
+
+<!-- =================================================
+     PHONE
+================================================== -->
 
 <div class="form-group">
+
 
 <label
     class="form-label"
     for="phone"
 >
+
     Phone Number
 
-<span class="optional">
-    Optional
-</span>
+    <span class="optional">
+        Optional
+    </span>
 
 </label>
 
+
 <div class="input-wrapper">
+
 
 <span class="input-icon">
     📱
 </span>
+
 
 <input
     type="tel"
@@ -1178,26 +1647,34 @@ Birthday Details
     placeholder="Phone number"
 >
 
-</div>
 
 </div>
 
 
-<!-- NOTES -->
+</div>
+
+
+
+<!-- =================================================
+     NOTES
+================================================== -->
 
 <div class="form-group full">
+
 
 <label
     class="form-label"
     for="notes"
 >
+
     Notes
 
-<span class="optional">
-    Optional
-</span>
+    <span class="optional">
+        Optional
+    </span>
 
 </label>
+
 
 <textarea
     id="notes"
@@ -1206,27 +1683,35 @@ Birthday Details
     placeholder="Add additional details..."
 >{{ birthday.notes or '' }}</textarea>
 
-</div>
 
 </div>
 
 
-<!-- =================================================
+</div>
+
+
+
+<!-- =====================================================
      PREVIEW
-================================================= -->
+===================================================== -->
 
 <div class="preview-grid">
 
 
+<!-- NAME -->
+
 <div class="preview-box">
+
 
 <div class="preview-icon">
     👤
 </div>
 
+
 <div class="preview-label">
     NAME
 </div>
+
 
 <div
     class="preview-value"
@@ -1235,18 +1720,25 @@ Birthday Details
     {{ birthday.name }}
 </div>
 
+
 </div>
 
 
+
+<!-- RELATIONSHIP -->
+
 <div class="preview-box">
+
 
 <div class="preview-icon">
     ❤️
 </div>
 
+
 <div class="preview-label">
     RELATIONSHIP
 </div>
+
 
 <div
     class="preview-value"
@@ -1255,38 +1747,64 @@ Birthday Details
     {{ birthday.relationship or "Not specified" }}
 </div>
 
+
 </div>
 
 
+
+<!-- BIRTHDAY -->
+
 <div class="preview-box">
+
 
 <div class="preview-icon">
     🎂
 </div>
 
+
 <div class="preview-label">
     BIRTHDAY
 </div>
+
 
 <div
     class="preview-value"
     id="preview-birthday"
 >
-    {{ birthday.birthday.strftime('%d %B %Y') }}
-</div>
+
+    {% if birthday.birthday %}
+
+        {{ birthday.birthday.strftime(
+            '%d %B %Y'
+        ) }}
+
+    {% else %}
+
+        Not selected
+
+    {% endif %}
 
 </div>
 
+
+</div>
+
+
+
+<!-- PHONE -->
 
 <div class="preview-box">
+
 
 <div class="preview-icon">
     📱
 </div>
 
+
 <div class="preview-label">
     PHONE
 </div>
+
 
 <div
     class="preview-value"
@@ -1295,23 +1813,34 @@ Birthday Details
     {{ birthday.phone or "Not specified" }}
 </div>
 
-</div>
 
 </div>
 
+
 </div>
 
 
-<!-- FOOTER -->
+</div>
+
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
 
 <div class="form-footer">
 
+
 <div class="footer-note">
+
     🔒 Your changes will be saved securely.
+
 </div>
 
 
+
 <div class="button-group">
+
 
 <a
     href="{{ url_for('birthdays') }}"
@@ -1328,21 +1857,25 @@ Birthday Details
     💾 Save Changes
 </button>
 
+
 </div>
+
 
 </div>
 
 
 </form>
 
+
 </main>
 
 </div>
 
+{% endblock %}
 
-<!-- =====================================================
-     THEME JS
-===================================================== -->
+
+
+{% block scripts %}
 
 <script
     src="{{ url_for(
@@ -1354,254 +1887,347 @@ Birthday Details
 
 <script>
 
-/* =========================================================
+/* =====================================================
    LIVE PREVIEW
-========================================================= */
+===================================================== */
 
-const nameInput =
-    document.getElementById("name");
-
-const relationshipInput =
-    document.getElementById("relationship");
-
-const birthdayInput =
-    document.getElementById("birthday");
-
-const phoneInput =
-    document.getElementById("phone");
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
 
-const previewName =
-    document.getElementById("preview-name");
-
-const previewRelationship =
-    document.getElementById("preview-relationship");
-
-const previewBirthday =
-    document.getElementById("preview-birthday");
-
-const previewPhone =
-    document.getElementById("preview-phone");
+        const nameInput =
+            document.getElementById(
+                "name"
+            );
 
 
-nameInput.addEventListener(
-    "input",
-    function() {
-
-        previewName.textContent =
-            nameInput.value ||
-            "Person";
-
-    }
-);
+        const relationshipInput =
+            document.getElementById(
+                "relationship"
+            );
 
 
-relationshipInput.addEventListener(
-    "input",
-    function() {
-
-        previewRelationship.textContent =
-            relationshipInput.value ||
-            "Not specified";
-
-    }
-);
+        const birthdayInput =
+            document.getElementById(
+                "birthday"
+            );
 
 
-phoneInput.addEventListener(
-    "input",
-    function() {
-
-        previewPhone.textContent =
-            phoneInput.value ||
-            "Not specified";
-
-    }
-);
+        const phoneInput =
+            document.getElementById(
+                "phone"
+            );
 
 
-birthdayInput.addEventListener(
-    "change",
-    function() {
+        const previewName =
+            document.getElementById(
+                "preview-name"
+            );
 
-        if (!birthdayInput.value) {
 
-            previewBirthday.textContent =
-                "Not selected";
+        const previewRelationship =
+            document.getElementById(
+                "preview-relationship"
+            );
 
-            return;
+
+        const previewBirthday =
+            document.getElementById(
+                "preview-birthday"
+            );
+
+
+        const previewPhone =
+            document.getElementById(
+                "preview-phone"
+            );
+
+
+
+        /* ===============================================
+           NAME
+        =============================================== */
+
+        nameInput.addEventListener(
+            "input",
+            function () {
+
+                previewName.textContent =
+                    nameInput.value.trim()
+                    ||
+                    "Person";
+
+            }
+        );
+
+
+
+        /* ===============================================
+           RELATIONSHIP
+        =============================================== */
+
+        relationshipInput.addEventListener(
+            "input",
+            function () {
+
+                previewRelationship.textContent =
+                    relationshipInput.value.trim()
+                    ||
+                    "Not specified";
+
+            }
+        );
+
+
+
+        /* ===============================================
+           PHONE
+        =============================================== */
+
+        phoneInput.addEventListener(
+            "input",
+            function () {
+
+                previewPhone.textContent =
+                    phoneInput.value.trim()
+                    ||
+                    "Not specified";
+
+            }
+        );
+
+
+
+        /* ===============================================
+           BIRTHDAY
+        =============================================== */
+
+        birthdayInput.addEventListener(
+            "change",
+            function () {
+
+
+                if (
+                    !birthdayInput.value
+                ) {
+
+                    previewBirthday.textContent =
+                        "Not selected";
+
+                    return;
+
+                }
+
+
+                const date =
+                    new Date(
+                        birthdayInput.value
+                        +
+                        "T00:00:00"
+                    );
+
+
+                previewBirthday.textContent =
+                    date.toLocaleDateString(
+                        "en-IN",
+                        {
+                            day:
+                                "2-digit",
+
+                            month:
+                                "long",
+
+                            year:
+                                "numeric"
+                        }
+                    );
+
+            }
+        );
+
+
+
+        /* ===============================================
+           TIME PERIOD
+        =============================================== */
+
+        const periodButtons =
+            document.querySelectorAll(
+                ".time-option"
+            );
+
+
+        function getAutomaticPeriod() {
+
+
+            const hour =
+                new Date().getHours();
+
+
+            if (
+                hour >= 5 &&
+                hour < 12
+            ) {
+
+                return "morning";
+
+            }
+
+
+            if (
+                hour >= 12 &&
+                hour < 18
+            ) {
+
+                return "afternoon";
+
+            }
+
+
+            if (
+                hour >= 18 &&
+                hour < 21
+            ) {
+
+                return "evening";
+
+            }
+
+
+            return "night";
 
         }
 
 
-        const d =
-            new Date(
-                birthdayInput.value +
-                "T00:00:00"
-            );
+
+        function applyPeriod(
+            period
+        ) {
 
 
-        previewBirthday.textContent =
-            d.toLocaleDateString(
-                "en-IN",
-                {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric"
+            const periods = [
+                "morning",
+                "afternoon",
+                "evening",
+                "night"
+            ];
+
+
+            periods.forEach(
+                function (item) {
+
+                    document.body.classList.remove(
+                        "period-" + item
+                    );
+
                 }
             );
 
-    }
-);
+
+            const actual =
+                period === "auto"
+                    ? getAutomaticPeriod()
+                    : period;
 
 
-/* =========================================================
-   MANUAL TIME PERIOD
-========================================================= */
-
-const periodButtons =
-    document.querySelectorAll(
-        ".time-option"
-    );
+            document.body.classList.add(
+                "period-" + actual
+            );
 
 
-function getAutomaticPeriod() {
+            periodButtons.forEach(
+                function (button) {
 
-    const hour =
-        new Date().getHours();
+                    button.classList.toggle(
+                        "active",
+                        button.dataset.period ===
+                        period
+                    );
 
-    if (
-        hour >= 5 &&
-        hour < 12
-    ) {
-        return "morning";
-    }
-
-    if (
-        hour >= 12 &&
-        hour < 18
-    ) {
-        return "afternoon";
-    }
-
-    if (
-        hour >= 18 &&
-        hour < 21
-    ) {
-        return "evening";
-    }
-
-    return "night";
-}
-
-
-function applyPeriod(period) {
-
-    const periods = [
-        "morning",
-        "afternoon",
-        "evening",
-        "night"
-    ];
-
-
-    periods.forEach(
-        function(item) {
-
-            document.body.classList.remove(
-                "period-" + item
+                }
             );
 
         }
-    );
 
 
-    const actual =
-        period === "auto"
-            ? getAutomaticPeriod()
-            : period;
+
+        periodButtons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
 
 
-    document.body.classList.add(
-        "period-" + actual
-    );
+                        const period =
+                            button.dataset.period;
 
 
-    periodButtons.forEach(
-        function(button) {
-
-            button.classList.toggle(
-                "active",
-                button.dataset.period === period
-            );
-
-        }
-    );
-
-}
+                        localStorage.setItem(
+                            "bday_reminder_period",
+                            period
+                        );
 
 
-periodButtons.forEach(
-    function(button) {
+                        applyPeriod(
+                            period
+                        );
 
-        button.addEventListener(
-            "click",
-            function() {
-
-                const period =
-                    button.dataset.period;
-
-                localStorage.setItem(
-                    "bday_reminder_period",
-                    period
-                );
-
-                applyPeriod(
-                    period
+                    }
                 );
 
             }
         );
 
-    }
-);
 
 
-const savedPeriod =
-    localStorage.getItem(
-        "bday_reminder_period"
-    ) || "auto";
-
-
-applyPeriod(
-    savedPeriod
-);
-
-
-setInterval(
-    function() {
-
-        if (
+        const savedPeriod =
             localStorage.getItem(
                 "bday_reminder_period"
-            ) === "auto"
-            ||
-            !localStorage.getItem(
-                "bday_reminder_period"
             )
-        ) {
+            ||
+            "auto";
 
-            applyPeriod("auto");
 
-        }
+        applyPeriod(
+            savedPeriod
+        );
 
-    },
-    60000
+
+
+        /* ===============================================
+           AUTO REFRESH
+        =============================================== */
+
+        setInterval(
+            function () {
+
+
+                const current =
+                    localStorage.getItem(
+                        "bday_reminder_period"
+                    );
+
+
+                if (
+                    !current ||
+                    current === "auto"
+                ) {
+
+                    applyPeriod(
+                        "auto"
+                    );
+
+                }
+
+            },
+            60000
+        );
+
+    }
 );
 
 </script>
 
-
-</body>
-
-</html>
+{% endblock %}

@@ -1,968 +1,954 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Login | Bday Reminder</title>
+{% extends "base.html" %}
 
 
-    <link
-        rel="stylesheet"
-        href="{{ url_for(
-            'static',
-            filename='css/style.css'
-        ) }}"
-    >
+{% block title %}
+Login | Bday Reminder
+{% endblock %}
 
 
-    <style>
+{% block head %}
 
-        /* =====================================================
-           RESET
-        ===================================================== */
+<style>
 
-        * {
-            box-sizing: border-box;
+    /* =====================================================
+       LOGIN PAGE
+    ===================================================== */
+
+    * {
+        box-sizing: border-box;
+    }
+
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+
+        width: 100%;
+        min-height: 100%;
+    }
+
+
+    body {
+
+        min-height: 100vh;
+        min-height: 100dvh;
+
+        font-family:
+            "Segoe UI",
+            Arial,
+            sans-serif;
+
+        overflow-x: hidden;
+    }
+
+
+    /* =====================================================
+       TIME BACKGROUND
+    ===================================================== */
+
+    #time-background {
+
+        position: fixed;
+
+        inset: 0;
+
+        z-index: -10;
+
+        overflow: hidden;
+
+        transition:
+            background 0.8s ease;
+    }
+
+
+    #time-background::before {
+
+        content: "";
+
+        position: absolute;
+
+        inset: 0;
+
+        background:
+            radial-gradient(
+                circle at 20% 20%,
+                rgba(255,255,255,.35),
+                transparent 32%
+            ),
+
+            radial-gradient(
+                circle at 80% 80%,
+                rgba(255,255,255,.18),
+                transparent 35%
+            );
+
+        pointer-events: none;
+    }
+
+
+    /* =====================================================
+       MORNING
+    ===================================================== */
+
+    #time-background.morning {
+
+        background:
+            linear-gradient(
+                135deg,
+                #ffd166 0%,
+                #ffb347 32%,
+                #f8cdda 68%,
+                #a1c4fd 100%
+            );
+    }
+
+
+    /* =====================================================
+       AFTERNOON
+    ===================================================== */
+
+    #time-background.afternoon {
+
+        background:
+            linear-gradient(
+                135deg,
+                #38bdf8 0%,
+                #87ceeb 38%,
+                #f6d365 100%
+            );
+    }
+
+
+    /* =====================================================
+       EVENING
+    ===================================================== */
+
+    #time-background.evening {
+
+        background:
+            linear-gradient(
+                135deg,
+                #f7971e 0%,
+                #ffd200 28%,
+                #f093fb 68%,
+                #4facfe 100%
+            );
+    }
+
+
+    /* =====================================================
+       NIGHT
+    ===================================================== */
+
+    #time-background.night {
+
+        background:
+            linear-gradient(
+                135deg,
+                #0f2027 0%,
+                #203a43 45%,
+                #2c5364 100%
+            );
+    }
+
+
+    /* =====================================================
+       FLOATING DECORATION
+    ===================================================== */
+
+    .sky-dot {
+
+        position: absolute;
+
+        width: 5px;
+        height: 5px;
+
+        border-radius: 50%;
+
+        background:
+            rgba(255,255,255,.75);
+
+        animation:
+            skyFloat 7s ease-in-out infinite;
+    }
+
+
+    .sky-dot:nth-child(1) {
+        top: 15%;
+        left: 12%;
+        animation-delay: 0s;
+    }
+
+
+    .sky-dot:nth-child(2) {
+        top: 28%;
+        left: 78%;
+        animation-delay: 1.5s;
+    }
+
+
+    .sky-dot:nth-child(3) {
+        top: 70%;
+        left: 20%;
+        animation-delay: 3s;
+    }
+
+
+    .sky-dot:nth-child(4) {
+        top: 62%;
+        left: 86%;
+        animation-delay: 4.5s;
+    }
+
+
+    @keyframes skyFloat {
+
+        0%,
+        100% {
+
+            transform:
+                translateY(0);
+
+            opacity: .35;
         }
 
+        50% {
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
+            transform:
+                translateY(-15px);
 
-            width: 100%;
-            min-height: 100%;
+            opacity: .9;
         }
+    }
 
 
-        body {
+    /* =====================================================
+       MAIN
+    ===================================================== */
 
-            min-height: 100vh;
-            min-height: 100dvh;
+    .login-page {
 
-            font-family:
-                "Segoe UI",
-                Arial,
-                sans-serif;
+        width: 100%;
 
-            overflow-x: hidden;
-        }
+        min-height: 100vh;
+        min-height: 100dvh;
 
+        display: flex;
 
-        /* =====================================================
-           TIME BACKGROUND
-        ===================================================== */
+        align-items: center;
 
-        #time-background {
+        justify-content: center;
 
-            position: fixed;
-
-            inset: 0;
-
-            z-index: -10;
-
-            overflow: hidden;
-
-            transition:
-                background 0.8s ease;
-        }
+        padding:
+            20px 15px;
+    }
 
 
-        #time-background::before {
+    /* =====================================================
+       LOGIN CARD
+    ===================================================== */
 
-            content: "";
+    .login-card {
 
-            position: absolute;
+        width: min(
+            100%,
+            430px
+        );
 
-            inset: 0;
+        padding:
+            28px 25px;
 
-            background:
-                radial-gradient(
-                    circle at 20% 20%,
-                    rgba(255,255,255,.35),
-                    transparent 32%
-                ),
+        background:
+            rgba(
+                255,
+                255,
+                255,
+                .95
+            );
 
-                radial-gradient(
-                    circle at 80% 80%,
-                    rgba(255,255,255,.18),
-                    transparent 35%
-                );
+        border:
+            1px solid
+            rgba(
+                255,
+                255,
+                255,
+                .85
+            );
 
-            pointer-events: none;
-        }
+        border-radius:
+            28px;
 
+        box-shadow:
+            0 25px 70px
+            rgba(
+                15,
+                23,
+                42,
+                .28
+            );
 
-        /* =====================================================
-           MORNING
-        ===================================================== */
+        backdrop-filter:
+            blur(18px);
 
-        #time-background.morning {
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #ffd166 0%,
-                    #ffb347 32%,
-                    #f8cdda 68%,
-                    #a1c4fd 100%
-                );
-        }
-
-
-        /* =====================================================
-           AFTERNOON
-        ===================================================== */
-
-        #time-background.afternoon {
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #38bdf8 0%,
-                    #87ceeb 38%,
-                    #f6d365 100%
-                );
-        }
+        -webkit-backdrop-filter:
+            blur(18px);
+    }
 
 
-        /* =====================================================
-           EVENING
-        ===================================================== */
+    /* =====================================================
+       LOGO
+    ===================================================== */
 
-        #time-background.evening {
+    .login-logo {
 
-            background:
-                linear-gradient(
-                    135deg,
-                    #f7971e 0%,
-                    #ffd200 28%,
-                    #f093fb 68%,
-                    #4facfe 100%
-                );
-        }
+        width: 82px;
 
+        height: 82px;
 
-        /* =====================================================
-           NIGHT
-        ===================================================== */
+        margin:
+            0 auto 15px;
 
-        #time-background.night {
+        display: flex;
 
-            background:
-                linear-gradient(
-                    135deg,
-                    #0f2027 0%,
-                    #203a43 45%,
-                    #2c5364 100%
-                );
-        }
+        align-items: center;
 
+        justify-content: center;
 
-        /* =====================================================
-           FLOATING DECORATION
-        ===================================================== */
+        border-radius:
+            25px;
 
-        .sky-dot {
+        background:
+            linear-gradient(
+                135deg,
+                #fff7cc,
+                #ffd166
+            );
 
-            position: absolute;
+        box-shadow:
+            0 12px 28px
+            rgba(
+                245,
+                158,
+                11,
+                .25
+            );
 
-            width: 5px;
-            height: 5px;
-
-            border-radius: 50%;
-
-            background:
-                rgba(255,255,255,.75);
-
-            animation:
-                skyFloat 7s ease-in-out infinite;
-        }
+        font-size: 43px;
+    }
 
 
-        .sky-dot:nth-child(1) {
-            top: 15%;
-            left: 12%;
-            animation-delay: 0s;
-        }
+    /* =====================================================
+       HEADER
+    ===================================================== */
+
+    .login-header {
+
+        text-align: center;
+
+        margin-bottom:
+            24px;
+    }
 
 
-        .sky-dot:nth-child(2) {
-            top: 28%;
-            left: 78%;
-            animation-delay: 1.5s;
-        }
+    .login-header h1 {
+
+        margin: 0;
+
+        font-size:
+            27px;
+
+        line-height:
+            1.2;
+
+        font-weight:
+            850;
+
+        color:
+            #172033;
+    }
 
 
-        .sky-dot:nth-child(3) {
-            top: 70%;
-            left: 20%;
-            animation-delay: 3s;
-        }
+    .login-header h1 span {
+
+        color:
+            #f59e0b;
+    }
 
 
-        .sky-dot:nth-child(4) {
-            top: 62%;
-            left: 86%;
-            animation-delay: 4.5s;
-        }
+    .login-header p {
+
+        margin:
+            8px 0 0;
+
+        font-size:
+            13px;
+
+        color:
+            #64748b;
+    }
 
 
-        @keyframes skyFloat {
+    /* =====================================================
+       FLASH MESSAGE
+    ===================================================== */
 
-            0%,
-            100% {
+    .flash-message {
 
-                transform:
-                    translateY(0);
+        padding:
+            11px 13px;
 
-                opacity: .35;
-            }
+        margin-bottom:
+            15px;
 
-            50% {
+        border-radius:
+            12px;
 
-                transform:
-                    translateY(-15px);
+        font-size:
+            13px;
 
-                opacity: .9;
-            }
-        }
+        font-weight:
+            650;
+
+        background:
+            #fff7ed;
+
+        color:
+            #9a3412;
+
+        border:
+            1px solid
+            #fed7aa;
+    }
 
 
-        /* =====================================================
-           MAIN
-        ===================================================== */
+    /* =====================================================
+       FORM
+    ===================================================== */
+
+    .login-form {
+
+        display:
+            flex;
+
+        flex-direction:
+            column;
+
+        gap:
+            15px;
+    }
+
+
+    .form-group {
+
+        display:
+            flex;
+
+        flex-direction:
+            column;
+
+        gap:
+            7px;
+    }
+
+
+    .form-group label {
+
+        padding-left:
+            3px;
+
+        font-size:
+            12px;
+
+        font-weight:
+            800;
+
+        color:
+            #334155;
+    }
+
+
+    .login-input {
+
+        width:
+            100%;
+
+        height:
+            52px;
+
+        padding:
+            0 15px;
+
+        border:
+            1px solid
+            #dbe3ec;
+
+        border-radius:
+            15px;
+
+        outline:
+            none;
+
+        background:
+            #ffffff;
+
+        color:
+            #172033;
+
+        font-family:
+            inherit;
+
+        font-size:
+            14px;
+
+        transition:
+            .2s ease;
+    }
+
+
+    .login-input::placeholder {
+
+        color:
+            #94a3b8;
+    }
+
+
+    .login-input:focus {
+
+        border-color:
+            #f59e0b;
+
+        box-shadow:
+            0 0 0 4px
+            rgba(
+                245,
+                158,
+                11,
+                .12
+            );
+    }
+
+
+    /* =====================================================
+       PASSWORD WRAPPER
+    ===================================================== */
+
+    .password-wrapper {
+
+        position:
+            relative;
+    }
+
+
+    .password-wrapper
+    .login-input {
+
+        padding-right:
+            52px;
+    }
+
+
+    .password-toggle {
+
+        position:
+            absolute;
+
+        right:
+            7px;
+
+        top:
+            50%;
+
+        transform:
+            translateY(-50%);
+
+        width:
+            40px;
+
+        height:
+            40px;
+
+        border:
+            none;
+
+        background:
+            transparent;
+
+        border-radius:
+            10px;
+
+        cursor:
+            pointer;
+
+        font-size:
+            17px;
+    }
+
+
+    .password-toggle:hover {
+
+        background:
+            #f8fafc;
+    }
+
+
+    /* =====================================================
+       LOGIN BUTTON
+    ===================================================== */
+
+    .login-button {
+
+        width:
+            100%;
+
+        min-height:
+            53px;
+
+        margin-top:
+            4px;
+
+        border:
+            none;
+
+        border-radius:
+            16px;
+
+        cursor:
+            pointer;
+
+        font-family:
+            inherit;
+
+        font-size:
+            15px;
+
+        font-weight:
+            850;
+
+        color:
+            #ffffff;
+
+        background:
+            linear-gradient(
+                135deg,
+                #f59e0b,
+                #f97316
+            );
+
+        box-shadow:
+            0 12px 25px
+            rgba(
+                249,
+                115,
+                22,
+                .25
+            );
+
+        transition:
+            transform .18s ease,
+            box-shadow .18s ease;
+    }
+
+
+    .login-button:hover {
+
+        transform:
+            translateY(-2px);
+
+        box-shadow:
+            0 15px 30px
+            rgba(
+                249,
+                115,
+                22,
+                .32
+            );
+    }
+
+
+    .login-button:active {
+
+        transform:
+            translateY(0);
+    }
+
+
+    /* =====================================================
+       CREATE ACCOUNT
+    ===================================================== */
+
+    .create-account {
+
+        margin:
+            20px 0 0;
+
+        text-align:
+            center;
+
+        font-size:
+            13px;
+
+        color:
+            #64748b;
+    }
+
+
+    .create-account a {
+
+        color:
+            #ea580c;
+
+        font-weight:
+            800;
+
+        text-decoration:
+            none;
+    }
+
+
+    .create-account a:hover {
+
+        text-decoration:
+            underline;
+    }
+
+
+    /* =====================================================
+       FOOTER
+    ===================================================== */
+
+    .login-footer {
+
+        margin-top:
+            20px;
+
+        padding-top:
+            15px;
+
+        border-top:
+            1px solid
+            #e2e8f0;
+
+        text-align:
+            center;
+
+        color:
+            #94a3b8;
+
+        font-size:
+            11px;
+    }
+
+
+    /* =====================================================
+       DARK THEME
+    ===================================================== */
+
+    body.dark .login-card {
+
+        background:
+            rgba(
+                30,
+                41,
+                59,
+                .95
+            );
+
+        border-color:
+            rgba(
+                255,
+                255,
+                255,
+                .12
+            );
+    }
+
+
+    body.dark .login-header h1 {
+
+        color:
+            #ffffff;
+    }
+
+
+    body.dark .login-header p {
+
+        color:
+            #cbd5e1;
+    }
+
+
+    body.dark .form-group label {
+
+        color:
+            #e2e8f0;
+    }
+
+
+    body.dark .login-input {
+
+        background:
+            #ffffff;
+
+        color:
+            #172033;
+
+        border-color:
+            #e2e8f0;
+    }
+
+
+    body.dark
+    .login-input::placeholder {
+
+        color:
+            #64748b;
+    }
+
+
+    body.dark
+    .password-toggle:hover {
+
+        background:
+            #f1f5f9;
+    }
+
+
+    body.dark .create-account {
+
+        color:
+            #cbd5e1;
+    }
+
+
+    body.dark .login-footer {
+
+        border-color:
+            rgba(
+                255,
+                255,
+                255,
+                .12
+            );
+
+        color:
+            #94a3b8;
+    }
+
+
+    /* =====================================================
+       MOBILE
+    ===================================================== */
+
+    @media (max-width: 600px) {
 
         .login-page {
 
-            width: 100%;
-
-            min-height: 100vh;
-            min-height: 100dvh;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
             padding:
-                20px 15px;
+                15px 12px;
         }
 
-
-        /* =====================================================
-           LOGIN CARD
-        ===================================================== */
 
         .login-card {
 
-            width: min(
-                100%,
-                430px
-            );
-
             padding:
-                28px 25px;
-
-            background:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .95
-                );
-
-            border:
-                1px solid
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .85
-                );
+                24px 18px;
 
             border-radius:
-                28px;
-
-            box-shadow:
-                0 25px 70px
-                rgba(
-                    15,
-                    23,
-                    42,
-                    .28
-                );
-
-            backdrop-filter:
-                blur(18px);
-
-            -webkit-backdrop-filter:
-                blur(18px);
+                24px;
         }
 
-
-        /* =====================================================
-           LOGO
-        ===================================================== */
 
         .login-logo {
 
-            width: 82px;
+            width:
+                70px;
 
-            height: 82px;
-
-            margin:
-                0 auto 15px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
+            height:
+                70px;
 
             border-radius:
-                25px;
+                21px;
 
-            background:
-                linear-gradient(
-                    135deg,
-                    #fff7cc,
-                    #ffd166
-                );
-
-            box-shadow:
-                0 12px 28px
-                rgba(
-                    245,
-                    158,
-                    11,
-                    .25
-                );
-
-            font-size: 43px;
+            font-size:
+                36px;
         }
 
 
-        /* =====================================================
-           HEADER
-        ===================================================== */
-
         .login-header {
 
-            text-align: center;
-
             margin-bottom:
-                24px;
+                20px;
         }
 
 
         .login-header h1 {
 
-            margin: 0;
-
             font-size:
-                27px;
-
-            line-height:
-                1.2;
-
-            font-weight:
-                850;
-
-            color:
-                #172033;
-        }
-
-
-        .login-header h1 span {
-
-            color:
-                #f59e0b;
+                24px;
         }
 
 
         .login-header p {
 
-            margin:
-                8px 0 0;
-
-            font-size:
-                13px;
-
-            color:
-                #64748b;
-        }
-
-
-        /* =====================================================
-           FLASH MESSAGE
-        ===================================================== */
-
-        .flash-message {
-
-            padding:
-                11px 13px;
-
-            margin-bottom:
-                15px;
-
-            border-radius:
-                12px;
-
-            font-size:
-                13px;
-
-            font-weight:
-                650;
-
-            background:
-                #fff7ed;
-
-            color:
-                #9a3412;
-
-            border:
-                1px solid
-                #fed7aa;
-        }
-
-
-        /* =====================================================
-           FORM
-        ===================================================== */
-
-        .login-form {
-
-            display:
-                flex;
-
-            flex-direction:
-                column;
-
-            gap:
-                15px;
-        }
-
-
-        .form-group {
-
-            display:
-                flex;
-
-            flex-direction:
-                column;
-
-            gap:
-                7px;
-        }
-
-
-        .form-group label {
-
-            padding-left:
-                3px;
-
             font-size:
                 12px;
-
-            font-weight:
-                800;
-
-            color:
-                #334155;
         }
 
 
         .login-input {
 
-            width:
-                100%;
-
             height:
                 52px;
-
-            padding:
-                0 15px;
-
-            border:
-                1px solid
-                #dbe3ec;
-
-            border-radius:
-                15px;
-
-            outline:
-                none;
-
-            background:
-                #ffffff;
-
-            color:
-                #172033;
-
-            font-family:
-                inherit;
-
-            font-size:
-                14px;
-
-            transition:
-                .2s ease;
         }
 
-
-        .login-input::placeholder {
-
-            color:
-                #94a3b8;
-        }
-
-
-        .login-input:focus {
-
-            border-color:
-                #f59e0b;
-
-            box-shadow:
-                0 0 0 4px
-                rgba(
-                    245,
-                    158,
-                    11,
-                    .12
-                );
-        }
-
-
-        /* =====================================================
-           PASSWORD WRAPPER
-        ===================================================== */
-
-        .password-wrapper {
-
-            position:
-                relative;
-        }
-
-
-        .password-wrapper
-        .login-input {
-
-            padding-right:
-                52px;
-        }
-
-
-        .password-toggle {
-
-            position:
-                absolute;
-
-            right:
-                7px;
-
-            top:
-                50%;
-
-            transform:
-                translateY(-50%);
-
-            width:
-                40px;
-
-            height:
-                40px;
-
-            border:
-                none;
-
-            background:
-                transparent;
-
-            border-radius:
-                10px;
-
-            cursor:
-                pointer;
-
-            font-size:
-                17px;
-        }
-
-
-        .password-toggle:hover {
-
-            background:
-                #f8fafc;
-        }
-
-
-        /* =====================================================
-           LOGIN BUTTON
-        ===================================================== */
 
         .login-button {
 
-            width:
-                100%;
-
             min-height:
-                53px;
+                52px;
+        }
 
-            margin-top:
-                4px;
+    }
 
-            border:
-                none;
 
-            border-radius:
-                16px;
+    @media (max-width: 380px) {
 
-            cursor:
-                pointer;
+        .login-card {
 
-            font-family:
-                inherit;
+            padding:
+                21px 15px;
+        }
+
+
+        .login-logo {
+
+            width:
+                64px;
+
+            height:
+                64px;
 
             font-size:
-                15px;
-
-            font-weight:
-                850;
-
-            color:
-                #ffffff;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #f59e0b,
-                    #f97316
-                );
-
-            box-shadow:
-                0 12px 25px
-                rgba(
-                    249,
-                    115,
-                    22,
-                    .25
-                );
-
-            transition:
-                transform .18s ease,
-                box-shadow .18s ease;
+                32px;
         }
 
 
-        .login-button:hover {
-
-            transform:
-                translateY(-2px);
-
-            box-shadow:
-                0 15px 30px
-                rgba(
-                    249,
-                    115,
-                    22,
-                    .32
-                );
-        }
-
-
-        .login-button:active {
-
-            transform:
-                translateY(0);
-        }
-
-
-        /* =====================================================
-           CREATE ACCOUNT
-        ===================================================== */
-
-        .create-account {
-
-            margin:
-                20px 0 0;
-
-            text-align:
-                center;
+        .login-header h1 {
 
             font-size:
-                13px;
-
-            color:
-                #64748b;
+                22px;
         }
 
+    }
 
-        .create-account a {
+</style>
 
-            color:
-                #ea580c;
+{% endblock %}
 
-            font-weight:
-                800;
 
-            text-decoration:
-                none;
-        }
 
-
-        .create-account a:hover {
-
-            text-decoration:
-                underline;
-        }
-
-
-        /* =====================================================
-           FOOTER
-        ===================================================== */
-
-        .login-footer {
-
-            margin-top:
-                20px;
-
-            padding-top:
-                15px;
-
-            border-top:
-                1px solid
-                #e2e8f0;
-
-            text-align:
-                center;
-
-            color:
-                #94a3b8;
-
-            font-size:
-                11px;
-        }
-
-
-        /* =====================================================
-           DARK THEME
-        ===================================================== */
-
-        body.dark .login-card {
-
-            background:
-                rgba(
-                    30,
-                    41,
-                    59,
-                    .95
-                );
-
-            border-color:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .12
-                );
-        }
-
-
-        body.dark .login-header h1 {
-
-            color:
-                #ffffff;
-        }
-
-
-        body.dark .login-header p {
-
-            color:
-                #cbd5e1;
-        }
-
-
-        body.dark .form-group label {
-
-            color:
-                #e2e8f0;
-        }
-
-
-        body.dark .login-input {
-
-            background:
-                #ffffff;
-
-            color:
-                #172033;
-
-            border-color:
-                #e2e8f0;
-        }
-
-
-        body.dark
-        .login-input::placeholder {
-
-            color:
-                #64748b;
-        }
-
-
-        body.dark
-        .password-toggle:hover {
-
-            background:
-                #f1f5f9;
-        }
-
-
-        body.dark .create-account {
-
-            color:
-                #cbd5e1;
-        }
-
-
-        body.dark .login-footer {
-
-            border-color:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .12
-                );
-
-            color:
-                #94a3b8;
-        }
-
-
-        /* =====================================================
-           MOBILE
-        ===================================================== */
-
-        @media (max-width: 600px) {
-
-            .login-page {
-
-                padding:
-                    15px 12px;
-            }
-
-
-            .login-card {
-
-                padding:
-                    24px 18px;
-
-                border-radius:
-                    24px;
-            }
-
-
-            .login-logo {
-
-                width:
-                    70px;
-
-                height:
-                    70px;
-
-                border-radius:
-                    21px;
-
-                font-size:
-                    36px;
-            }
-
-
-            .login-header {
-
-                margin-bottom:
-                    20px;
-            }
-
-
-            .login-header h1 {
-
-                font-size:
-                    24px;
-            }
-
-
-            .login-header p {
-
-                font-size:
-                    12px;
-            }
-
-
-            .login-input {
-
-                height:
-                    52px;
-            }
-
-
-            .login-button {
-
-                min-height:
-                    52px;
-            }
-
-        }
-
-
-        @media (max-width: 380px) {
-
-            .login-card {
-
-                padding:
-                    21px 15px;
-            }
-
-
-            .login-logo {
-
-                width:
-                    64px;
-
-                height:
-                    64px;
-
-                font-size:
-                    32px;
-            }
-
-
-            .login-header h1 {
-
-                font-size:
-                    22px;
-            }
-
-        }
-
-    </style>
-
-</head>
-
-
-<body>
-
+{% block content %}
 
 <!-- =========================================================
      TIME BACKGROUND
@@ -979,6 +965,7 @@
     <div class="sky-dot"></div>
 
 </div>
+
 
 
 <!-- =========================================================
@@ -1041,6 +1028,7 @@
         {% endwith %}
 
 
+
         <!-- LOGIN FORM -->
 
         <form
@@ -1070,6 +1058,7 @@
                 >
 
             </div>
+
 
 
             <!-- PASSWORD -->
@@ -1108,6 +1097,7 @@
             </div>
 
 
+
             <!-- LOGIN -->
 
             <button
@@ -1119,6 +1109,7 @@
 
 
         </form>
+
 
 
         <!-- CREATE ACCOUNT -->
@@ -1136,6 +1127,7 @@
         </p>
 
 
+
         <!-- FOOTER -->
 
         <div class="login-footer">
@@ -1151,10 +1143,11 @@
 
 </main>
 
+{% endblock %}
 
-<!-- =========================================================
-     JAVASCRIPT
-========================================================= -->
+
+
+{% block scripts %}
 
 <script>
 
@@ -1218,6 +1211,7 @@ document.addEventListener(
         }
 
 
+
         /* =================================================
            TIME BACKGROUND
         ================================================= */
@@ -1235,23 +1229,17 @@ document.addEventListener(
 
 
             if (hour < 12) {
-
                 return "morning";
-
             }
 
 
             if (hour < 18) {
-
                 return "afternoon";
-
             }
 
 
             if (hour < 20) {
-
                 return "evening";
-
             }
 
 
@@ -1270,12 +1258,10 @@ document.addEventListener(
 
 
             background.classList.remove(
-
                 "morning",
                 "afternoon",
                 "evening",
                 "night"
-
             );
 
 
@@ -1311,6 +1297,7 @@ document.addEventListener(
         }
 
 
+
         /* =================================================
            AUTOMATIC UPDATE
         ================================================= */
@@ -1340,6 +1327,7 @@ document.addEventListener(
         );
 
 
+
         /* =================================================
            DARK / LIGHT THEME
         ================================================= */
@@ -1365,7 +1353,4 @@ document.addEventListener(
 
 </script>
 
-
-</body>
-
-</html>
+{% endblock %}

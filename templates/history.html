@@ -1,810 +1,789 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
 
-    <meta charset="UTF-8">
+{% block title %}
+History | Bday Reminder
+{% endblock %}
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
 
-    <title>History | Bday Reminder</title>
+{% block head %}
 
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}"
-    >
+<!-- =====================================================
+     HISTORY-SPECIFIC STYLES
+     Common CSS + PWA handled by base.html
+====================================================== -->
 
-    <style>
+<style>
 
-        /* =====================================================
-           HISTORY PAGE
-        ===================================================== */
+/* =====================================================
+   HISTORY PAGE
+===================================================== */
 
-        .history-page {
+.history-page {
 
-            min-height: 100vh;
+    min-height: 100vh;
 
-            padding: 30px 35px 50px;
+    padding: 30px 35px 50px;
 
-            position: relative;
+    position: relative;
 
-            z-index: 5;
+    z-index: 5;
 
-        }
+}
 
 
-        .history-container {
+.history-container {
 
-            max-width: 1150px;
+    max-width: 1150px;
 
-            margin: 0 auto;
+    margin: 0 auto;
 
-        }
+}
 
 
-        /* =====================================================
-           HEADER
-        ===================================================== */
+/* =====================================================
+   HEADER
+===================================================== */
 
-        .history-header {
+.history-header {
 
-            display: flex;
+    display: flex;
 
-            align-items: center;
+    align-items: center;
 
-            gap: 18px;
+    gap: 18px;
 
-            margin-bottom: 28px;
+    margin-bottom: 28px;
 
-        }
+}
 
 
-        .history-back {
+.history-back {
 
-            width: 46px;
+    width: 46px;
 
-            height: 46px;
+    height: 46px;
 
-            border: none;
+    border: none;
 
-            border-radius: 14px;
+    border-radius: 14px;
 
-            background: rgba(
-                255,
-                255,
-                255,
-                .94
-            );
+    background: rgba(
+        255,
+        255,
+        255,
+        .94
+    );
 
-            box-shadow:
-                0 8px 25px rgba(
-                    15,
-                    23,
-                    42,
-                    .12
-                );
+    box-shadow:
+        0 8px 25px rgba(
+            15,
+            23,
+            42,
+            .12
+        );
 
-            font-size: 22px;
+    font-size: 22px;
 
-            cursor: pointer;
+    cursor: pointer;
 
-            transition: .2s ease;
+    transition: .2s ease;
 
-        }
+}
 
 
-        .history-back:hover {
+.history-back:hover {
 
-            transform:
-                translateY(-2px);
+    transform:
+        translateY(-2px);
 
-        }
+}
 
 
-        .history-title {
+.history-title {
 
-            flex: 1;
+    flex: 1;
 
-        }
+}
 
 
-        .history-title h1 {
+.history-title h1 {
 
-            margin: 0;
+    margin: 0;
 
-            font-size: 29px;
+    font-size: 29px;
 
-            color: #172033;
+    color: #172033;
 
-        }
+}
 
 
-        .history-title p {
+.history-title p {
 
-            margin: 5px 0 0;
+    margin: 5px 0 0;
 
-            color: #64748b;
+    color: #64748b;
 
-            font-size: 14px;
+    font-size: 14px;
 
-        }
+}
 
 
-        /* =====================================================
-           SUMMARY
-        ===================================================== */
+/* =====================================================
+   SUMMARY
+===================================================== */
 
-        .history-summary {
+.history-summary {
 
-            display: grid;
+    display: grid;
 
-            grid-template-columns:
-                repeat(3, 1fr);
+    grid-template-columns:
+        repeat(3, 1fr);
 
-            gap: 15px;
+    gap: 15px;
 
-            margin-bottom: 22px;
+    margin-bottom: 22px;
 
-        }
+}
 
 
-        .history-stat {
+.history-stat {
 
-            background:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .94
-                );
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .94
+        );
 
-            border-radius: 18px;
+    border-radius: 18px;
 
-            padding: 18px;
+    padding: 18px;
 
-            box-shadow:
-                0 8px 28px rgba(
-                    15,
-                    23,
-                    42,
-                    .09
-                );
+    box-shadow:
+        0 8px 28px rgba(
+            15,
+            23,
+            42,
+            .09
+        );
 
-            display: flex;
+    display: flex;
 
-            align-items: center;
+    align-items: center;
 
-            gap: 14px;
+    gap: 14px;
 
-        }
+}
 
 
-        .history-stat-icon {
+.history-stat-icon {
 
-            width: 48px;
+    width: 48px;
 
-            height: 48px;
+    height: 48px;
 
-            border-radius: 15px;
+    border-radius: 15px;
 
-            display: flex;
+    display: flex;
 
-            align-items: center;
+    align-items: center;
 
-            justify-content: center;
+    justify-content: center;
 
-            font-size: 22px;
+    font-size: 22px;
 
-        }
+}
 
 
-        .history-stat:nth-child(1)
-        .history-stat-icon {
+.history-stat:nth-child(1)
+.history-stat-icon {
 
-            background: #eef2ff;
+    background: #eef2ff;
 
-        }
+}
 
 
-        .history-stat:nth-child(2)
-        .history-stat-icon {
+.history-stat:nth-child(2)
+.history-stat-icon {
 
-            background: #fdf2f8;
+    background: #fdf2f8;
 
-        }
+}
 
 
-        .history-stat:nth-child(3)
-        .history-stat-icon {
+.history-stat:nth-child(3)
+.history-stat-icon {
 
-            background: #ecfdf5;
+    background: #ecfdf5;
 
-        }
+}
 
 
-        .history-stat span {
+.history-stat span {
 
-            display: block;
+    display: block;
 
-            font-size: 12px;
+    font-size: 12px;
 
-            color: #64748b;
+    color: #64748b;
 
-        }
+}
 
 
-        .history-stat strong {
+.history-stat strong {
 
-            display: block;
+    display: block;
 
-            margin-top: 3px;
+    margin-top: 3px;
 
-            font-size: 22px;
+    font-size: 22px;
 
-            color: #172033;
+    color: #172033;
 
-        }
+}
 
 
-        /* =====================================================
-           TWO COLUMNS
-        ===================================================== */
+/* =====================================================
+   TWO COLUMNS
+===================================================== */
 
-        .history-columns {
+.history-columns {
 
-            display: grid;
+    display: grid;
 
-            grid-template-columns:
-                1fr 1fr;
+    grid-template-columns:
+        1fr 1fr;
 
-            gap: 22px;
+    gap: 22px;
 
-            align-items: start;
+    align-items: start;
 
-        }
+}
 
 
-        .history-card {
+.history-card {
 
-            background:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .95
-                );
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .95
+        );
 
-            border-radius: 22px;
+    border-radius: 22px;
 
-            overflow: hidden;
+    overflow: hidden;
 
-            box-shadow:
-                0 10px 35px rgba(
-                    15,
-                    23,
-                    42,
-                    .10
-                );
+    box-shadow:
+        0 10px 35px rgba(
+            15,
+            23,
+            42,
+            .10
+        );
 
-        }
+}
 
 
-        /* =====================================================
-           CARD HEADER
-        ===================================================== */
+/* =====================================================
+   CARD HEADER
+===================================================== */
 
-        .history-card-header {
+.history-card-header {
 
-            padding: 20px;
+    padding: 20px;
 
-            display: flex;
+    display: flex;
 
-            align-items: center;
+    align-items: center;
 
-            gap: 13px;
+    gap: 13px;
 
-            border-bottom:
-                1px solid
-                rgba(
-                    15,
-                    23,
-                    42,
-                    .06
-                );
+    border-bottom:
+        1px solid
+        rgba(
+            15,
+            23,
+            42,
+            .06
+        );
 
-        }
+}
 
 
-        .history-card-icon {
+.history-card-icon {
 
-            width: 45px;
+    width: 45px;
 
-            height: 45px;
+    height: 45px;
 
-            border-radius: 14px;
+    border-radius: 14px;
 
-            display: flex;
+    display: flex;
 
-            align-items: center;
+    align-items: center;
 
-            justify-content: center;
+    justify-content: center;
 
-            font-size: 21px;
+    font-size: 21px;
 
-        }
+}
 
 
-        .reminder-header-icon {
+.reminder-header-icon {
 
-            background: #fff7ed;
+    background: #fff7ed;
 
-        }
+}
 
 
-        .birthday-header-icon {
+.birthday-header-icon {
 
-            background: #fdf2f8;
+    background: #fdf2f8;
 
-        }
+}
 
 
-        .history-card-header h2 {
+.history-card-header h2 {
 
-            margin: 0;
+    margin: 0;
 
-            font-size: 17px;
+    font-size: 17px;
 
-            color: #172033;
+    color: #172033;
 
-        }
+}
 
 
-        .history-card-header p {
+.history-card-header p {
 
-            margin: 4px 0 0;
+    margin: 4px 0 0;
 
-            font-size: 12px;
+    font-size: 12px;
 
-            color: #64748b;
+    color: #64748b;
 
-        }
+}
 
 
-        /* =====================================================
-           HISTORY LIST
-        ===================================================== */
+/* =====================================================
+   HISTORY LIST
+===================================================== */
 
-        .history-list {
+.history-list {
 
-            padding: 8px 20px 18px;
+    padding: 8px 20px 18px;
 
-        }
+}
 
 
-        .history-item {
+.history-item {
 
-            display: flex;
+    display: flex;
 
-            gap: 13px;
+    gap: 13px;
 
-            padding: 16px 0;
+    padding: 16px 0;
 
-            border-bottom:
-                1px solid
-                rgba(
-                    15,
-                    23,
-                    42,
-                    .055
-                );
+    border-bottom:
+        1px solid
+        rgba(
+            15,
+            23,
+            42,
+            .055
+        );
 
-        }
+}
 
 
-        .history-item:last-child {
+.history-item:last-child {
 
-            border-bottom: none;
+    border-bottom: none;
 
-        }
+}
 
 
-        .history-item-icon {
+.history-item-icon {
 
-            width: 40px;
+    width: 40px;
 
-            height: 40px;
+    height: 40px;
 
-            flex-shrink: 0;
+    flex-shrink: 0;
 
-            border-radius: 12px;
+    border-radius: 12px;
 
-            display: flex;
+    display: flex;
 
-            align-items: center;
+    align-items: center;
 
-            justify-content: center;
+    justify-content: center;
 
-            background: #f8fafc;
+    background: #f8fafc;
 
-            font-size: 18px;
+    font-size: 18px;
 
-        }
+}
 
 
-        .history-item-content {
+.history-item-content {
 
-            min-width: 0;
+    min-width: 0;
 
-            flex: 1;
+    flex: 1;
 
-        }
+}
 
 
-        .history-item-content h3 {
+.history-item-content h3 {
 
-            margin: 0;
+    margin: 0;
 
-            font-size: 14px;
+    font-size: 14px;
 
-            color: #172033;
+    color: #172033;
 
-            word-break: break-word;
+    word-break: break-word;
 
-        }
+}
 
 
-        .history-item-content p {
+.history-item-content p {
 
-            margin: 5px 0 0;
+    margin: 5px 0 0;
 
-            font-size: 12px;
+    font-size: 12px;
 
-            color: #64748b;
+    color: #64748b;
 
-            line-height: 1.5;
+    line-height: 1.5;
 
-        }
+}
 
 
-        .history-meta {
+.history-meta {
 
-            display: flex;
+    display: flex;
 
-            flex-wrap: wrap;
+    flex-wrap: wrap;
 
-            gap: 7px;
+    gap: 7px;
 
-            margin-top: 8px;
+    margin-top: 8px;
 
-        }
+}
 
 
-        .history-tag {
+.history-tag {
 
-            display: inline-flex;
+    display: inline-flex;
 
-            align-items: center;
+    align-items: center;
 
-            padding: 5px 8px;
+    padding: 5px 8px;
 
-            border-radius: 8px;
+    border-radius: 8px;
 
-            background: #f1f5f9;
+    background: #f1f5f9;
 
-            color: #475569;
+    color: #475569;
 
-            font-size: 10px;
+    font-size: 10px;
 
-            font-weight: 600;
+    font-weight: 600;
 
-        }
+}
 
 
-        .completed-tag {
+.completed-tag {
 
-            background: #ecfdf5;
+    background: #ecfdf5;
 
-            color: #047857;
+    color: #047857;
 
-        }
+}
 
 
-        .birthday-tag {
+.birthday-tag {
 
-            background: #fdf2f8;
+    background: #fdf2f8;
 
-            color: #be185d;
+    color: #be185d;
 
-        }
+}
 
 
-        .pending-tag {
+.pending-tag {
 
-            background: #fff7ed;
+    background: #fff7ed;
 
-            color: #c2410c;
+    color: #c2410c;
 
-        }
+}
 
 
-        /* =====================================================
-           EMPTY STATE
-        ===================================================== */
+/* =====================================================
+   EMPTY STATE
+===================================================== */
 
-        .history-empty {
+.history-empty {
 
-            text-align: center;
+    text-align: center;
 
-            padding: 55px 20px;
+    padding: 55px 20px;
 
-            color: #64748b;
+    color: #64748b;
 
-        }
+}
 
 
-        .history-empty-icon {
+.history-empty-icon {
 
-            font-size: 38px;
+    font-size: 38px;
 
-            margin-bottom: 10px;
+    margin-bottom: 10px;
 
-        }
+}
 
 
-        .history-empty h3 {
+.history-empty h3 {
 
-            margin: 0;
+    margin: 0;
 
-            color: #172033;
+    color: #172033;
 
-            font-size: 16px;
+    font-size: 16px;
 
-        }
+}
 
 
-        .history-empty p {
+.history-empty p {
 
-            margin: 7px auto 0;
+    margin: 7px auto 0;
 
-            max-width: 300px;
+    max-width: 300px;
 
-            font-size: 12px;
+    font-size: 12px;
 
-            line-height: 1.6;
+    line-height: 1.6;
 
-        }
+}
 
 
-        /* =====================================================
-           SEARCH / FILTER
-        ===================================================== */
+/* =====================================================
+   SEARCH
+===================================================== */
 
-        .history-tools {
+.history-tools {
 
-            display: flex;
+    display: flex;
 
-            justify-content: flex-end;
+    justify-content: flex-end;
 
-            margin-bottom: 15px;
+    margin-bottom: 15px;
 
-        }
+}
 
 
-        .history-search {
+.history-search {
 
-            width: 250px;
+    width: 250px;
 
-            padding: 11px 14px;
+    padding: 11px 14px;
 
-            border-radius: 12px;
+    border-radius: 12px;
 
-            border:
-                1px solid #e2e8f0;
+    border:
+        1px solid #e2e8f0;
 
-            outline: none;
+    outline: none;
 
-            background: white;
+    background: white;
 
-            color: #172033;
+    color: #172033;
 
-            font-size: 13px;
+    font-size: 13px;
 
-        }
+}
 
 
-        .history-search:focus {
+.history-search:focus {
 
-            border-color: #818cf8;
+    border-color: #818cf8;
 
-            box-shadow:
-                0 0 0 3px
-                rgba(
-                    99,
-                    102,
-                    241,
-                    .10
-                );
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            99,
+            102,
+            241,
+            .10
+        );
 
-        }
+}
 
 
-        /* =====================================================
-           DARK MODE
-        ===================================================== */
+/* =====================================================
+   DARK MODE
+===================================================== */
 
-        body.dark .history-title h1 {
+body.dark .history-title h1 {
 
-            color: #f8fafc;
+    color: #f8fafc;
 
-        }
+}
 
 
-        body.dark .history-title p {
+body.dark .history-title p {
 
-            color: #cbd5e1;
+    color: #cbd5e1;
 
-        }
+}
 
 
-        body.dark .history-back {
+body.dark .history-back {
 
-            background: #111827;
+    background: #111827;
 
-            color: white;
+    color: white;
 
-        }
+}
 
 
-        body.dark .history-stat,
-        body.dark .history-card {
+body.dark .history-stat,
+body.dark .history-card {
 
-            background:
-                rgba(
-                    17,
-                    24,
-                    39,
-                    .95
-                );
+    background:
+        rgba(
+            17,
+            24,
+            39,
+            .95
+        );
 
-        }
+}
 
 
-        body.dark .history-stat strong,
-        body.dark .history-card-header h2,
-        body.dark .history-item-content h3,
-        body.dark .history-empty h3 {
+body.dark .history-stat strong,
+body.dark .history-card-header h2,
+body.dark .history-item-content h3,
+body.dark .history-empty h3 {
 
-            color: #f8fafc;
+    color: #f8fafc;
 
-        }
+}
 
 
-        body.dark .history-stat span,
-        body.dark .history-card-header p,
-        body.dark .history-item-content p,
-        body.dark .history-empty {
+body.dark .history-stat span,
+body.dark .history-card-header p,
+body.dark .history-item-content p,
+body.dark .history-empty {
 
-            color: #cbd5e1;
+    color: #cbd5e1;
 
-        }
+}
 
 
-        body.dark .history-card-header,
-        body.dark .history-item {
+body.dark .history-card-header,
+body.dark .history-item {
 
-            border-color:
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .07
-                );
+    border-color:
+        rgba(
+            255,
+            255,
+            255,
+            .07
+        );
 
-        }
+}
 
 
-        body.dark .history-item-icon,
-        body.dark .history-tag {
+body.dark .history-item-icon,
+body.dark .history-tag {
 
-            background: #1f2937;
+    background: #1f2937;
 
-            color: #dbeafe;
+    color: #dbeafe;
 
-        }
+}
 
 
-        body.dark .history-search {
+body.dark .history-search {
 
-            background: #111827;
+    background: #111827;
 
-            border-color: #374151;
+    border-color: #374151;
 
-            color: white;
+    color: white;
 
-        }
+}
 
 
-        /* =====================================================
-           MOBILE
-        ===================================================== */
+/* =====================================================
+   MOBILE
+===================================================== */
 
-        @media (max-width: 800px) {
+@media (max-width: 800px) {
 
-            .history-page {
+    .history-page {
 
-                padding:
-                    20px 15px 40px;
+        padding:
+            20px 15px 40px;
 
-            }
+    }
 
 
-            .history-columns {
+    .history-columns {
 
-                grid-template-columns: 1fr;
+        grid-template-columns: 1fr;
 
-            }
+    }
 
 
-            .history-summary {
+    .history-summary {
 
-                grid-template-columns: 1fr;
+        grid-template-columns: 1fr;
 
-            }
+    }
 
 
-            .history-title h1 {
+    .history-title h1 {
 
-                font-size: 24px;
+        font-size: 24px;
 
-            }
+    }
 
 
-            .history-search {
+    .history-search {
 
-                width: 100%;
+        width: 100%;
 
-            }
+    }
 
 
-            .history-tools {
+    .history-tools {
 
-                display: block;
+        display: block;
 
-            }
+    }
 
-        }
+}
 
-    </style>
+</style>
 
-</head>
+{% endblock %}
 
 
-<body>
 
+{% block content %}
 
-<!-- =========================================================
-     BACKGROUND
-========================================================= -->
-
-<div
-    id="time-background"
-    class="morning"
->
-
-    <div class="sun"></div>
-
-    <div class="moon"></div>
-
-</div>
-
-
-
-<!-- =========================================================
+<!-- =====================================================
      HISTORY PAGE
-========================================================= -->
+===================================================== -->
 
 <div class="history-page">
 
@@ -821,6 +800,7 @@
                 class="history-back"
                 type="button"
                 onclick="window.location.href='{{ url_for('home') }}'"
+                aria-label="Back to dashboard"
             >
                 ←
             </button>
@@ -849,6 +829,8 @@
         <section class="history-summary">
 
 
+            <!-- TIME REMINDERS -->
+
             <div class="history-stat">
 
                 <div class="history-stat-icon">
@@ -870,6 +852,8 @@
             </div>
 
 
+
+            <!-- BIRTHDAYS -->
 
             <div class="history-stat">
 
@@ -893,6 +877,8 @@
 
 
 
+            <!-- TOTAL -->
+
             <div class="history-stat">
 
                 <div class="history-stat-icon">
@@ -906,12 +892,17 @@
                     </span>
 
                     <strong>
-                        {{ reminders|length + birthdays|length }}
+                        {{
+                            reminders|length
+                            +
+                            birthdays|length
+                        }}
                     </strong>
 
                 </div>
 
             </div>
+
 
         </section>
 
@@ -928,6 +919,7 @@
                 id="history-search"
                 class="history-search"
                 placeholder="🔍 Search history..."
+                autocomplete="off"
             >
 
         </div>
@@ -942,18 +934,23 @@
 
 
             <!-- =================================================
-                 TIME REMINDERS
+                 TIME REMINDER HISTORY
             ================================================== -->
 
             <div class="history-card">
 
+
                 <div class="history-card-header">
 
                     <div
-                        class="history-card-icon reminder-header-icon"
+                        class="
+                            history-card-icon
+                            reminder-header-icon
+                        "
                     >
                         ⏰
                     </div>
+
 
                     <div>
 
@@ -970,6 +967,7 @@
                 </div>
 
 
+
                 <div
                     class="history-list"
                     id="reminder-history"
@@ -980,15 +978,22 @@
 
                         {% for reminder in reminders %}
 
+
                             <div
-                                class="history-item searchable-item"
+                                class="
+                                    history-item
+                                    searchable-item
+                                "
                                 data-search="
                                     {{ reminder.title }}
                                     {{ reminder.description or '' }}
                                     {{ reminder.place or '' }}
                                     {{ reminder.reminder_date }}
+                                    {{ reminder.reminder_time }}
+                                    {{ reminder.status or '' }}
                                 "
                             >
+
 
                                 <div class="history-item-icon">
                                     ⏰
@@ -996,6 +1001,7 @@
 
 
                                 <div class="history-item-content">
+
 
                                     <h3>
                                         {{ reminder.title }}
@@ -1011,31 +1017,81 @@
                                     {% endif %}
 
 
+
                                     <div class="history-meta">
 
-                                        <span class="history-tag">
+
+                                        <!-- DATE -->
+
+                                        <span
+                                            class="history-tag"
+                                        >
 
                                             📅
-                                            {{ reminder.reminder_date.strftime(
-                                                "%d %B %Y"
-                                            ) }}
+
+                                            {% if reminder.reminder_date %}
+
+                                                {% if reminder.reminder_date.strftime is defined %}
+
+                                                    {{
+                                                        reminder.reminder_date.strftime(
+                                                            "%d %B %Y"
+                                                        )
+                                                    }}
+
+                                                {% else %}
+
+                                                    {{
+                                                        reminder.reminder_date
+                                                    }}
+
+                                                {% endif %}
+
+                                            {% endif %}
 
                                         </span>
 
 
-                                        <span class="history-tag">
 
-                                            🕐
-                                            {{ reminder.reminder_time.strftime(
-                                                "%I:%M %p"
-                                            ) }}
+                                        <!-- TIME -->
 
-                                        </span>
+                                        {% if reminder.reminder_time %}
 
+                                            <span
+                                                class="history-tag"
+                                            >
+
+                                                🕐
+
+                                                {% if reminder.reminder_time.strftime is defined %}
+
+                                                    {{
+                                                        reminder.reminder_time.strftime(
+                                                            "%I:%M %p"
+                                                        )
+                                                    }}
+
+                                                {% else %}
+
+                                                    {{
+                                                        reminder.reminder_time
+                                                    }}
+
+                                                {% endif %}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+
+                                        <!-- PLACE -->
 
                                         {% if reminder.place %}
 
-                                            <span class="history-tag">
+                                            <span
+                                                class="history-tag"
+                                            >
 
                                                 📍
                                                 {{ reminder.place }}
@@ -1045,6 +1101,9 @@
                                         {% endif %}
 
 
+
+                                        <!-- STATUS -->
+
                                         {% if reminder.status == "completed" %}
 
                                             <span
@@ -1053,7 +1112,9 @@
                                                     completed-tag
                                                 "
                                             >
+
                                                 ✓ Completed
+
                                             </span>
 
                                         {% else %}
@@ -1064,22 +1125,34 @@
                                                     pending-tag
                                                 "
                                             >
+
                                                 ⏳
-                                                {{ reminder.status|capitalize }}
+
+                                                {{
+                                                    reminder.status
+                                                    |default("Pending")
+                                                    |capitalize
+                                                }}
+
                                             </span>
 
                                         {% endif %}
 
+
                                     </div>
+
 
                                 </div>
 
+
                             </div>
+
 
                         {% endfor %}
 
 
                     {% else %}
+
 
                         <div class="history-empty">
 
@@ -1098,28 +1171,35 @@
 
                         </div>
 
+
                     {% endif %}
 
 
                 </div>
+
 
             </div>
 
 
 
             <!-- =================================================
-                 BIRTHDAYS
+                 BIRTHDAY HISTORY
             ================================================== -->
 
             <div class="history-card">
 
+
                 <div class="history-card-header">
 
                     <div
-                        class="history-card-icon birthday-header-icon"
+                        class="
+                            history-card-icon
+                            birthday-header-icon
+                        "
                     >
                         🎂
                     </div>
+
 
                     <div>
 
@@ -1136,6 +1216,7 @@
                 </div>
 
 
+
                 <div
                     class="history-list"
                     id="birthday-history"
@@ -1146,15 +1227,21 @@
 
                         {% for person in birthdays %}
 
+
                             <div
-                                class="history-item searchable-item"
+                                class="
+                                    history-item
+                                    searchable-item
+                                "
                                 data-search="
                                     {{ person.name }}
                                     {{ person.relationship or '' }}
                                     {{ person.birthday }}
                                     {{ person.notes or '' }}
+                                    {{ person.phone or '' }}
                                 "
                             >
+
 
                                 <div class="history-item-icon">
                                     🎂
@@ -1163,38 +1250,79 @@
 
                                 <div class="history-item-content">
 
+
                                     <h3>
                                         {{ person.name }}
                                     </h3>
 
 
-                                    <p>
+                                    {% if person.birthday %}
 
-                                        🎂 Birthday:
-                                        {{ person.birthday.strftime(
-                                            "%d %B"
-                                        ) }}
+                                        <p>
 
-                                    </p>
+                                            🎂 Birthday:
+
+                                            {% if person.birthday.strftime is defined %}
+
+                                                {{
+                                                    person.birthday.strftime(
+                                                        "%d %B"
+                                                    )
+                                                }}
+
+                                            {% else %}
+
+                                                {{
+                                                    person.birthday
+                                                }}
+
+                                            {% endif %}
+
+                                        </p>
+
+                                    {% endif %}
+
 
 
                                     <div class="history-meta">
 
 
-                                        <span
-                                            class="
-                                                history-tag
-                                                birthday-tag
-                                            "
-                                        >
+                                        <!-- BIRTHDAY -->
 
-                                            🎂
-                                            {{ person.birthday.strftime(
-                                                "%d %B %Y"
-                                            ) }}
+                                        {% if person.birthday %}
 
-                                        </span>
+                                            <span
+                                                class="
+                                                    history-tag
+                                                    birthday-tag
+                                                "
+                                            >
 
+                                                🎂
+
+                                                {% if person.birthday.strftime is defined %}
+
+                                                    {{
+                                                        person.birthday.strftime(
+                                                            "%d %B %Y"
+                                                        )
+                                                    }}
+
+                                                {% else %}
+
+                                                    {{
+                                                        person.birthday
+                                                    }}
+
+                                                {% endif %}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+
+                                        <!-- RELATIONSHIP -->
 
                                         {% if person.relationship %}
 
@@ -1210,6 +1338,9 @@
                                         {% endif %}
 
 
+
+                                        <!-- PHONE -->
+
                                         {% if person.phone %}
 
                                             <span
@@ -1223,16 +1354,21 @@
 
                                         {% endif %}
 
+
                                     </div>
+
 
                                 </div>
 
+
                             </div>
+
 
                         {% endfor %}
 
 
                     {% else %}
+
 
                         <div class="history-empty">
 
@@ -1251,10 +1387,12 @@
 
                         </div>
 
+
                     {% endif %}
 
 
                 </div>
+
 
             </div>
 
@@ -1285,11 +1423,11 @@
 
 </div>
 
+{% endblock %}
 
 
-<!-- =========================================================
-     JAVASCRIPT
-========================================================= -->
+
+{% block scripts %}
 
 <script>
 
@@ -1364,81 +1502,6 @@ document.addEventListener(
 
 
         /* =================================================
-           TIME BACKGROUND
-           Uses the same existing theme system
-        ================================================= */
-
-        const background =
-            document.getElementById(
-                "time-background"
-            );
-
-
-        if (background) {
-
-            function getPeriod() {
-
-                const hour =
-                    new Date().getHours();
-
-
-                if (hour < 12) {
-
-                    return "morning";
-
-                }
-
-
-                if (hour < 18) {
-
-                    return "afternoon";
-
-                }
-
-
-                if (hour < 20) {
-
-                    return "evening";
-
-                }
-
-
-                return "night";
-
-            }
-
-
-            const saved =
-                localStorage.getItem(
-                    "bday-reminder-period"
-                );
-
-
-            const period =
-                (
-                    !saved ||
-                    saved === "auto"
-                )
-                    ? getPeriod()
-                    : saved;
-
-
-            background.classList.remove(
-                "morning",
-                "afternoon",
-                "evening",
-                "night"
-            );
-
-
-            background.classList.add(
-                period
-            );
-
-        }
-
-
-        /* =================================================
            DARK THEME
         ================================================= */
 
@@ -1463,7 +1526,4 @@ document.addEventListener(
 
 </script>
 
-
-</body>
-
-</html>
+{% endblock %}

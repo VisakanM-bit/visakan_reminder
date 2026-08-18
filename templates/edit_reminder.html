@@ -1,33 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
 
-<meta charset="UTF-8">
+{% block title %}
+Edit Reminder | Bday Reminder
+{% endblock %}
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
 
-<title>Edit Reminder | Bday Reminder</title>
+{% block head %}
 
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='css/reminder-theme.css') }}">
+<link
+    rel="stylesheet"
+    href="{{ url_for(
+        'static',
+        filename='css/reminder-theme.css'
+    ) }}"
+>
 
 <style>
 
-/* =========================================================
-   COMMON FORM DESIGN
-========================================================= */
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: "Segoe UI", Arial, sans-serif;
-}
+/* =====================================================
+   MAIN
+===================================================== */
 
 .main {
     width: min(100% - 30px, 1050px);
@@ -36,46 +29,71 @@ body {
 }
 
 
-/* =========================================================
+/* =====================================================
    NAVBAR
-========================================================= */
+===================================================== */
 
 .navbar {
     position: sticky;
     top: 0;
     z-index: 100;
+
     background: rgba(255,255,255,.88);
+
     backdrop-filter: blur(18px);
-    border-bottom: 1px solid rgba(148,163,184,.25);
+
+    border-bottom:
+        1px solid
+        rgba(148,163,184,.25);
 }
 
 .navbar-inner {
     max-width: 1200px;
     margin: auto;
+
     padding: 12px 20px;
+
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     gap: 15px;
 }
 
 .brand {
     display: flex;
+
     align-items: center;
+
     gap: 9px;
+
     text-decoration: none;
+
     color: #172033;
+
     font-weight: 800;
 }
 
 .brand-icon {
     width: 40px;
     height: 40px;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
+
     border-radius: 12px;
-    background: linear-gradient(135deg,#4f46e5,#7c3aed);
+
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        );
+
     color: white;
 }
 
@@ -86,69 +104,101 @@ body {
 
 .nav-tab {
     color: #64748b;
+
     text-decoration: none;
+
     padding: 9px 13px;
+
     border-radius: 9px;
+
     font-size: 13px;
+
     font-weight: 700;
 }
 
 .nav-tab.active {
     color: #4f46e5;
-    background: rgba(79,70,229,.10);
+
+    background:
+        rgba(79,70,229,.10);
 }
 
 .nav-actions {
     display: flex;
+
     align-items: center;
+
     gap: 8px;
 }
 
 .theme-toggle {
     width: 40px;
     height: 40px;
-    border: 1px solid rgba(148,163,184,.3);
+
+    border:
+        1px solid
+        rgba(148,163,184,.3);
+
     border-radius: 10px;
-    background: rgba(255,255,255,.8);
+
+    background:
+        rgba(255,255,255,.8);
+
     cursor: pointer;
+
     font-size: 17px;
 }
 
 .logout {
     text-decoration: none;
+
     color: #dc2626;
+
     font-size: 13px;
+
     font-weight: 700;
+
     padding: 9px 12px;
+
     border-radius: 9px;
-    background: rgba(220,38,38,.08);
+
+    background:
+        rgba(220,38,38,.08);
 }
 
 
-/* =========================================================
+/* =====================================================
    BREADCRUMB
-========================================================= */
+===================================================== */
 
 .breadcrumb {
     display: flex;
+
     flex-wrap: wrap;
+
     align-items: center;
+
     gap: 8px;
+
     margin-bottom: 20px;
+
     font-size: 13px;
+
     color: #64748b;
 }
 
 .breadcrumb a {
     color: #4f46e5;
+
     text-decoration: none;
+
     font-weight: 700;
 }
 
 
-/* =========================================================
+/* =====================================================
    HEADING
-========================================================= */
+===================================================== */
 
 .page-heading {
     margin-bottom: 22px;
@@ -156,108 +206,177 @@ body {
 
 .page-heading h1 {
     margin: 0;
+
     display: flex;
+
     align-items: center;
+
     gap: 12px;
-    font-size: clamp(28px,5vw,40px);
+
+    font-size:
+        clamp(
+            28px,
+            5vw,
+            40px
+        );
+
     color: #172033;
 }
 
 .heading-icon {
     width: 52px;
     height: 52px;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
+
     border-radius: 15px;
-    background: rgba(255,255,255,.92);
-    box-shadow: 0 12px 30px rgba(15,23,42,.12);
+
+    background:
+        rgba(255,255,255,.92);
+
+    box-shadow:
+        0 12px 30px
+        rgba(15,23,42,.12);
 }
 
 .page-heading p {
     margin: 8px 0 0;
+
     color: #64748b;
+
     font-size: 14px;
 }
 
 
-/* =========================================================
+/* =====================================================
    TIME SELECTOR
-========================================================= */
+===================================================== */
 
 .time-selector {
     display: flex;
+
     flex-wrap: wrap;
+
     gap: 8px;
+
     margin-bottom: 20px;
 }
 
 .time-option {
-    border: 1px solid rgba(148,163,184,.25);
-    background: rgba(255,255,255,.88);
+    border:
+        1px solid
+        rgba(148,163,184,.25);
+
+    background:
+        rgba(255,255,255,.88);
+
     padding: 9px 13px;
+
     border-radius: 10px;
+
     cursor: pointer;
+
     font-size: 12px;
+
     font-weight: 700;
+
     color: #334155;
+
+    transition: .2s;
+}
+
+.time-option:hover {
+    transform: translateY(-1px);
 }
 
 .time-option.active {
     background: #4f46e5;
+
     color: white;
 }
 
 
-/* =========================================================
+/* =====================================================
    FORM CARD
-========================================================= */
+===================================================== */
 
 .form-card {
-    background: rgba(255,255,255,.95);
-    border: 1px solid rgba(148,163,184,.25);
+    background:
+        rgba(255,255,255,.95);
+
+    border:
+        1px solid
+        rgba(148,163,184,.25);
+
     border-radius: 22px;
-    box-shadow: 0 25px 70px rgba(15,23,42,.14);
+
+    box-shadow:
+        0 25px 70px
+        rgba(15,23,42,.14);
+
     overflow: hidden;
 }
 
+
+/* =====================================================
+   FORM HEADER
+===================================================== */
+
 .form-header {
     padding: 20px 24px;
-    border-bottom: 1px solid #e5e7eb;
-    background: linear-gradient(
-        135deg,
-        rgba(255,255,255,.98),
-        rgba(248,250,252,.94)
-    );
+
+    border-bottom:
+        1px solid
+        #e5e7eb;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,.98),
+            rgba(248,250,252,.94)
+        );
 }
 
 .section-title {
     display: flex;
+
     align-items: center;
+
     gap: 10px;
+
     font-size: 18px;
+
     font-weight: 800;
+
     color: #172033;
 }
 
 .section-icon {
     width: 38px;
     height: 38px;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
+
     border-radius: 10px;
-    background: linear-gradient(
-        135deg,
-        #eef2ff,
-        #ede9fe
-    );
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #ede9fe
+        );
 }
 
 
-/* =========================================================
+/* =====================================================
    FORM BODY
-========================================================= */
+===================================================== */
 
 .form-body {
     padding: 24px;
@@ -265,7 +384,16 @@ body {
 
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(2,minmax(0,1fr));
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
     gap: 20px;
 }
 
@@ -279,18 +407,30 @@ body {
 
 .form-label {
     display: block;
+
     margin-bottom: 8px;
+
     color: #172033;
+
     font-size: 13px;
+
     font-weight: 800;
 }
 
 .optional {
     margin-left: 5px;
+
     color: #94a3b8;
+
     font-size: 11px;
+
     font-weight: 600;
 }
+
+
+/* =====================================================
+   INPUTS
+===================================================== */
 
 .input-wrapper {
     position: relative;
@@ -298,51 +438,76 @@ body {
 
 .input-icon {
     position: absolute;
+
     left: 13px;
+
     top: 50%;
-    transform: translateY(-50%);
+
+    transform:
+        translateY(-50%);
+
     font-size: 17px;
+
     pointer-events: none;
 }
 
 .form-input,
 .form-textarea {
     width: 100%;
-    border: 1px solid #dbe2ea;
+
+    border:
+        1px solid
+        #dbe2ea;
+
     border-radius: 12px;
-    background: #fff;
+
+    background: #ffffff;
+
     color: #172033;
+
     font-size: 14px;
+
     outline: none;
+
     transition: .2s;
 }
 
 .form-input {
     height: 48px;
-    padding: 0 14px 0 43px;
+
+    padding:
+        0 14px 0 43px;
 }
 
 .form-textarea {
     min-height: 120px;
+
     padding: 14px;
+
     resize: vertical;
 }
 
 .form-input:focus,
 .form-textarea:focus {
     border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99,102,241,.10);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(99,102,241,.10);
 }
 
 
-/* =========================================================
+/* =====================================================
    STATUS
-========================================================= */
+===================================================== */
 
 .status-panel {
     display: flex;
+
     justify-content: space-between;
+
     align-items: center;
+
     gap: 15px;
 
     padding: 15px;
@@ -350,165 +515,231 @@ body {
     border-radius: 13px;
 
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+
+    border:
+        1px solid
+        #e2e8f0;
 }
 
 .status-left {
     display: flex;
+
     align-items: center;
+
     gap: 12px;
 }
 
 .status-icon {
     width: 40px;
     height: 40px;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
+
     border-radius: 11px;
+
     background: #eef2ff;
 }
 
 .status-name {
     font-weight: 800;
+
     color: #172033;
 }
 
 .status-description {
     margin-top: 3px;
+
     font-size: 11px;
+
     color: #64748b;
 }
 
 .status-badge {
     padding: 7px 10px;
+
     border-radius: 8px;
+
     font-size: 11px;
+
     font-weight: 800;
 }
 
 .status-pending {
     color: #b45309;
+
     background: #fef3c7;
 }
 
 .status-completed {
     color: #15803d;
+
     background: #dcfce7;
 }
 
 
-/* =========================================================
+/* =====================================================
    PREVIEW
-========================================================= */
+===================================================== */
 
 .preview-grid {
     display: grid;
-    grid-template-columns: repeat(4,1fr);
+
+    grid-template-columns:
+        repeat(
+            4,
+            1fr
+        );
+
     gap: 12px;
+
     margin-top: 25px;
 }
 
 .preview-box {
     padding: 16px;
+
     border-radius: 14px;
-    background: linear-gradient(
-        135deg,
-        #ffffff,
-        #f8fafc
-    );
-    border: 1px solid #e2e8f0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #f8fafc
+        );
+
+    border:
+        1px solid
+        #e2e8f0;
 }
 
 .preview-icon {
     font-size: 20px;
+
     margin-bottom: 8px;
 }
 
 .preview-label {
     font-size: 10px;
+
     font-weight: 800;
+
     color: #64748b;
+
     letter-spacing: .8px;
+
     margin-bottom: 5px;
 }
 
 .preview-value {
     font-size: 14px;
+
     font-weight: 800;
+
     color: #172033;
+
     word-break: break-word;
 }
 
 
-/* =========================================================
+/* =====================================================
    FOOTER
-========================================================= */
+===================================================== */
 
 .form-footer {
     padding: 18px 24px;
+
     display: flex;
+
     justify-content: space-between;
+
     align-items: center;
+
     gap: 15px;
-    border-top: 1px solid #e5e7eb;
+
+    border-top:
+        1px solid
+        #e5e7eb;
+
     background: #fafbfc;
 }
 
 .footer-note {
     color: #64748b;
+
     font-size: 12px;
 }
 
 .button-group {
     display: flex;
+
     gap: 9px;
 }
 
 .button {
     display: inline-flex;
+
     align-items: center;
     justify-content: center;
+
     min-height: 44px;
+
     padding: 0 17px;
+
     border-radius: 11px;
+
     text-decoration: none;
+
     font-size: 13px;
+
     font-weight: 800;
+
     cursor: pointer;
 }
 
 .button-secondary {
     color: #475569;
-    background: white;
-    border: 1px solid #dbe2ea;
+
+    background: #ffffff;
+
+    border:
+        1px solid
+        #dbe2ea;
 }
 
 .button-primary {
     border: none;
+
     color: white;
-    background: linear-gradient(
-        135deg,
-        #4f46e5,
-        #7c3aed
-    );
-    box-shadow: 0 8px 20px rgba(79,70,229,.23);
+
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        );
+
+    box-shadow:
+        0 8px 20px
+        rgba(79,70,229,.23);
 }
 
 
-/* =========================================================
+/* =====================================================
    DARK MODE
-========================================================= */
+===================================================== */
 
 body.dark .navbar {
-    background: rgba(15,23,42,.88);
+    background:
+        rgba(15,23,42,.88);
 }
 
 body.dark .brand,
 body.dark .page-heading h1,
 body.dark .form-label,
-body.dark .section-title,
-body.dark .status-name {
+body.dark .section-title {
     color: #f8fafc;
 }
 
@@ -521,27 +752,37 @@ body.dark .nav-tab.active {
 }
 
 body.dark .theme-toggle {
-    background: rgba(30,41,59,.8);
+    background:
+        rgba(30,41,59,.8);
+
     color: white;
 }
 
 body.dark .heading-icon {
-    background: rgba(30,41,59,.9);
+    background:
+        rgba(30,41,59,.9);
+
     color: white;
 }
 
 body.dark .time-option {
-    background: rgba(30,41,59,.88);
+    background:
+        rgba(30,41,59,.88);
+
     color: #e2e8f0;
 }
 
 body.dark .form-card {
-    background: rgba(15,23,42,.94);
+    background:
+        rgba(15,23,42,.94);
 }
 
 body.dark .form-header {
-    background: rgba(30,41,59,.8);
-    border-color: rgba(255,255,255,.08);
+    background:
+        rgba(30,41,59,.8);
+
+    border-color:
+        rgba(255,255,255,.08);
 }
 
 body.dark .status-panel {
@@ -553,7 +794,8 @@ body.dark .status-name {
 }
 
 body.dark .preview-box {
-    background: rgba(255,255,255,.96);
+    background:
+        rgba(255,255,255,.96);
 }
 
 body.dark .preview-value {
@@ -561,16 +803,19 @@ body.dark .preview-value {
 }
 
 body.dark .form-footer {
-    background: rgba(30,41,59,.75);
-    border-color: rgba(255,255,255,.08);
+    background:
+        rgba(30,41,59,.75);
+
+    border-color:
+        rgba(255,255,255,.08);
 }
 
 
-/* =========================================================
+/* =====================================================
    MOBILE
-========================================================= */
+===================================================== */
 
-@media (max-width:800px) {
+@media (max-width: 800px) {
 
     .navbar-inner {
         flex-wrap: wrap;
@@ -578,7 +823,9 @@ body.dark .form-footer {
 
     .nav-tabs {
         order: 3;
+
         width: 100%;
+
         overflow-x: auto;
     }
 
@@ -591,11 +838,16 @@ body.dark .form-footer {
     }
 
     .preview-grid {
-        grid-template-columns: repeat(2,1fr);
+        grid-template-columns:
+            repeat(
+                2,
+                1fr
+            );
     }
 
     .form-footer {
         align-items: stretch;
+
         flex-direction: column;
     }
 
@@ -606,12 +858,18 @@ body.dark .form-footer {
     .button {
         flex: 1;
     }
+
 }
 
-@media (max-width:520px) {
+
+@media (max-width: 520px) {
 
     .main {
-        width: calc(100% - 20px);
+        width:
+            calc(
+                100% - 20px
+            );
+
         padding-top: 20px;
     }
 
@@ -634,30 +892,39 @@ body.dark .form-footer {
     }
 
     .preview-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns:
+            1fr 1fr;
     }
 
     .button-group {
         flex-direction: column;
     }
+
 }
 
 </style>
 
-</head>
+{% endblock %}
 
 
-<body>
 
+{% block content %}
 
-<!-- TIME BACKGROUND -->
+<!-- =====================================================
+     TIME BACKGROUND
+===================================================== -->
 
-<div class="time-background">
+<div
+    class="time-background"
+    id="time-background"
+>
 
     <div class="sun"></div>
+
     <div class="moon"></div>
 
     <div class="cloud cloud-1"></div>
+
     <div class="cloud cloud-2"></div>
 
     <div class="stars">
@@ -683,646 +950,1151 @@ body.dark .form-footer {
 </div>
 
 
-<!-- NAVBAR -->
+
+<!-- =====================================================
+     NAVBAR
+===================================================== -->
 
 <nav class="navbar">
 
 <div class="navbar-inner">
 
-<a href="{{ url_for('home') }}" class="brand">
 
-<span class="brand-icon">🎂</span>
+<a
+    href="{{ url_for('home') }}"
+    class="brand"
+>
 
-<span>Bday Reminder</span>
+    <span class="brand-icon">
+        🎂
+    </span>
+
+    <span>
+        Bday Reminder
+    </span>
 
 </a>
+
 
 
 <div class="nav-tabs">
 
-<a href="{{ url_for('home') }}" class="nav-tab">
-🏠 Dashboard
+
+<a
+    href="{{ url_for('home') }}"
+    class="nav-tab"
+>
+    🏠 Dashboard
 </a>
 
-<a href="{{ url_for('birthdays') }}" class="nav-tab">
-🎂 Birthdays
+
+<a
+    href="{{ url_for('birthdays') }}"
+    class="nav-tab"
+>
+    🎂 Birthdays
 </a>
 
-<a href="{{ url_for('reminders') }}" class="nav-tab active">
-⏰ Reminders
+
+<a
+    href="{{ url_for('reminders') }}"
+    class="nav-tab active"
+>
+    ⏰ Reminders
 </a>
+
 
 </div>
+
 
 
 <div class="nav-actions">
 
-<button id="theme-toggle"
-        class="theme-toggle"
-        type="button">
-🌙
+
+<button
+    id="theme-toggle"
+    class="theme-toggle"
+    type="button"
+>
+    🌙
 </button>
 
-<a href="{{ url_for('logout') }}"
-   class="logout">
-Logout
+
+<a
+    href="{{ url_for('logout') }}"
+    class="logout"
+>
+    Logout
 </a>
 
+
 </div>
+
 
 </div>
 
 </nav>
 
 
-<!-- MAIN -->
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
 
 <main class="main">
 
 
+<!-- BREADCRUMB -->
+
 <div class="breadcrumb">
 
-<a href="{{ url_for('home') }}">Dashboard</a>
+
+<a
+    href="{{ url_for('home') }}"
+>
+    Dashboard
+</a>
+
 
 <span>›</span>
 
-<a href="{{ url_for('reminders') }}">Reminders</a>
+
+<a
+    href="{{ url_for('reminders') }}"
+>
+    Reminders
+</a>
+
 
 <span>›</span>
 
-<span>Edit Reminder</span>
+
+<span>
+    Edit Reminder
+</span>
+
 
 </div>
 
 
+
+<!-- HEADING -->
+
 <div class="page-heading">
+
 
 <h1>
 
-<span class="heading-icon">✏️</span>
+<span class="heading-icon">
+    ✏️
+</span>
 
 Edit Reminder
 
 </h1>
 
+
 <p>
 Update your reminder details and keep your schedule organized.
 </p>
 
+
 </div>
 
 
-<!-- TIME OPTIONS -->
+
+<!-- =====================================================
+     TIME SELECTOR
+===================================================== -->
 
 <div class="time-selector">
 
-<button class="time-option"
-        data-period="auto"
-        type="button">
-🔄 Auto
+
+<button
+    class="time-option"
+    data-period="auto"
+    type="button"
+>
+    🔄 Auto
 </button>
 
-<button class="time-option"
-        data-period="morning"
-        type="button">
-🌅 Morning
+
+<button
+    class="time-option"
+    data-period="morning"
+    type="button"
+>
+    🌅 Morning
 </button>
 
-<button class="time-option"
-        data-period="afternoon"
-        type="button">
-☀️ Afternoon
+
+<button
+    class="time-option"
+    data-period="afternoon"
+    type="button"
+>
+    ☀️ Afternoon
 </button>
 
-<button class="time-option"
-        data-period="evening"
-        type="button">
-🌇 Evening
+
+<button
+    class="time-option"
+    data-period="evening"
+    type="button"
+>
+    🌇 Evening
 </button>
 
-<button class="time-option"
-        data-period="night"
-        type="button">
-🌙 Night
+
+<button
+    class="time-option"
+    data-period="night"
+    type="button"
+>
+    🌙 Night
 </button>
+
 
 </div>
 
 
-<!-- FORM -->
 
-<form method="POST"
-      action="{{ url_for('edit_reminder', reminder_id=reminder.id) }}"
-      class="form-card">
+<!-- =====================================================
+     FORM
+===================================================== -->
 
+<form
+    method="POST"
+    action="{{ url_for(
+        'edit_reminder',
+        reminder_id=reminder.id
+    ) }}"
+    class="form-card"
+>
+
+
+<!-- HEADER -->
 
 <div class="form-header">
 
+
 <div class="section-title">
 
-<span class="section-icon">⏰</span>
+
+<span class="section-icon">
+    ⏰
+</span>
+
 
 Reminder Details
 
-</div>
 
 </div>
 
+
+</div>
+
+
+
+<!-- BODY -->
 
 <div class="form-body">
+
 
 <div class="form-grid">
 
 
-<!-- TITLE -->
+<!-- =================================================
+     TITLE
+================================================== -->
 
 <div class="form-group">
 
-<label class="form-label"
-       for="title">
-Reminder Title
+
+<label
+    class="form-label"
+    for="title"
+>
+    Reminder Title
 </label>
+
 
 <div class="input-wrapper">
 
-<span class="input-icon">📌</span>
 
-<input type="text"
-       id="title"
-       name="title"
-       class="form-input"
-       value="{{ reminder.title }}"
-       required>
-
-</div>
-
-</div>
-
-
-<!-- PLACE -->
-
-<div class="form-group">
-
-<label class="form-label"
-       for="place">
-
-Place
-
-<span class="optional">
-Optional
+<span class="input-icon">
+    📌
 </span>
 
-</label>
 
-<div class="input-wrapper">
+<input
+    type="text"
+    id="title"
+    name="title"
+    class="form-input"
+    value="{{ reminder.title }}"
+    required
+>
 
-<span class="input-icon">📍</span>
-
-<input type="text"
-       id="place"
-       name="place"
-       class="form-input"
-       value="{{ reminder.place or '' }}"
-       placeholder="Office, College, Home...">
-
-</div>
 
 </div>
 
 
-<!-- DATE -->
+</div>
+
+
+
+<!-- =================================================
+     PLACE
+================================================== -->
 
 <div class="form-group">
 
-<label class="form-label"
-       for="reminder_date">
-Reminder Date
+
+<label
+    class="form-label"
+    for="place"
+>
+
+    Place
+
+    <span class="optional">
+        Optional
+    </span>
+
 </label>
+
 
 <div class="input-wrapper">
 
-<span class="input-icon">📅</span>
 
-<input type="date"
-       id="reminder_date"
-       name="reminder_date"
-       class="form-input"
-       value="{{ reminder.reminder_date.strftime('%Y-%m-%d') }}"
-       required>
+<span class="input-icon">
+    📍
+</span>
+
+
+<input
+    type="text"
+    id="place"
+    name="place"
+    class="form-input"
+    value="{{ reminder.place or '' }}"
+    placeholder="Office, College, Home..."
+>
+
 
 </div>
 
+
 </div>
 
 
-<!-- TIME -->
+
+<!-- =================================================
+     DATE
+================================================== -->
 
 <div class="form-group">
 
-<label class="form-label"
-       for="reminder_time">
-Reminder Time
+
+<label
+    class="form-label"
+    for="reminder_date"
+>
+    Reminder Date
 </label>
+
 
 <div class="input-wrapper">
 
-<span class="input-icon">🕐</span>
 
-<input type="time"
-       id="reminder_time"
-       name="reminder_time"
-       class="form-input"
-       value="{{ reminder.reminder_time.strftime('%H:%M') }}"
-       required>
+<span class="input-icon">
+    📅
+</span>
+
+
+<input
+    type="date"
+    id="reminder_date"
+    name="reminder_date"
+    class="form-input"
+    value="{{
+        reminder.reminder_date.strftime('%Y-%m-%d')
+        if reminder.reminder_date
+        else ''
+    }}"
+    required
+>
+
 
 </div>
 
+
 </div>
 
 
-<!-- DESCRIPTION -->
+
+<!-- =================================================
+     TIME
+================================================== -->
+
+<div class="form-group">
+
+
+<label
+    class="form-label"
+    for="reminder_time"
+>
+    Reminder Time
+</label>
+
+
+<div class="input-wrapper">
+
+
+<span class="input-icon">
+    🕐
+</span>
+
+
+<input
+    type="time"
+    id="reminder_time"
+    name="reminder_time"
+    class="form-input"
+    value="{{
+        reminder.reminder_time.strftime('%H:%M')
+        if reminder.reminder_time
+        else ''
+    }}"
+    required
+>
+
+
+</div>
+
+
+</div>
+
+
+
+<!-- =================================================
+     DESCRIPTION
+================================================== -->
 
 <div class="form-group full">
 
-<label class="form-label"
-       for="description">
 
-Description
+<label
+    class="form-label"
+    for="description"
+>
 
-<span class="optional">
-Optional
-</span>
+    Description
+
+    <span class="optional">
+        Optional
+    </span>
 
 </label>
 
-<textarea id="description"
-          name="description"
-          class="form-textarea"
-          placeholder="Add additional details...">{{ reminder.description or '' }}</textarea>
+
+<textarea
+    id="description"
+    name="description"
+    class="form-textarea"
+    placeholder="Add additional details..."
+>{{ reminder.description or '' }}</textarea>
+
 
 </div>
 
 
-<!-- STATUS -->
+
+<!-- =================================================
+     STATUS
+================================================== -->
 
 <div class="form-group full">
+
 
 <label class="form-label">
-Current Status
+    Current Status
 </label>
+
 
 <div class="status-panel">
 
+
 <div class="status-left">
+
 
 <div class="status-icon">
 
 {% if reminder.status == "completed" %}
-✅
+    ✅
 {% else %}
-⏳
+    ⏳
 {% endif %}
 
 </div>
 
+
 <div>
+
 
 <div class="status-name">
 
 {% if reminder.status == "completed" %}
-Completed
+    Completed
 {% else %}
-Pending
+    Pending
 {% endif %}
 
 </div>
+
 
 <div class="status-description">
 
 {% if reminder.status == "completed" %}
-This reminder has already been completed.
+
+    This reminder has already been completed.
+
 {% else %}
-This reminder is waiting for its scheduled time.
+
+    This reminder is waiting for its scheduled time.
+
 {% endif %}
 
 </div>
 
-</div>
 
 </div>
 
 
-<span class="status-badge
-{% if reminder.status == 'completed' %}
-status-completed
-{% else %}
-status-pending
-{% endif %}">
+</div>
+
+
+
+<span
+    class="status-badge
+    {% if reminder.status == 'completed' %}
+        status-completed
+    {% else %}
+        status-pending
+    {% endif %}"
+>
+
 
 {% if reminder.status == "completed" %}
-✓ Completed
+
+    ✓ Completed
+
 {% else %}
-⏳ Pending
+
+    ⏳ Pending
+
 {% endif %}
+
 
 </span>
 
-</div>
 
 </div>
 
+
 </div>
 
 
-<!-- PREVIEW -->
+</div>
+
+
+
+<!-- =====================================================
+     PREVIEW
+===================================================== -->
 
 <div class="preview-grid">
 
 
-<div class="preview-box">
-
-<div class="preview-icon">📌</div>
-
-<div class="preview-label">WHAT</div>
-
-<div class="preview-value"
-     id="preview-title">
-{{ reminder.title }}
-</div>
-
-</div>
-
+<!-- TITLE -->
 
 <div class="preview-box">
 
-<div class="preview-icon">📍</div>
 
-<div class="preview-label">PLACE</div>
-
-<div class="preview-value"
-     id="preview-place">
-{{ reminder.place or "Not specified" }}
+<div class="preview-icon">
+    📌
 </div>
 
+
+<div class="preview-label">
+    WHAT
 </div>
 
+
+<div
+    class="preview-value"
+    id="preview-title"
+>
+    {{ reminder.title }}
+</div>
+
+
+</div>
+
+
+
+<!-- PLACE -->
 
 <div class="preview-box">
 
-<div class="preview-icon">📅</div>
 
-<div class="preview-label">DATE</div>
-
-<div class="preview-value"
-     id="preview-date">
-{{ reminder.reminder_date.strftime('%d %B %Y') }}
+<div class="preview-icon">
+    📍
 </div>
 
+
+<div class="preview-label">
+    PLACE
 </div>
 
+
+<div
+    class="preview-value"
+    id="preview-place"
+>
+    {{ reminder.place or "Not specified" }}
+</div>
+
+
+</div>
+
+
+
+<!-- DATE -->
 
 <div class="preview-box">
 
-<div class="preview-icon">🕐</div>
 
-<div class="preview-label">TIME</div>
-
-<div class="preview-value"
-     id="preview-time">
-{{ reminder.reminder_time.strftime('%I:%M %p') }}
-</div>
-
-</div>
-
-</div>
-
+<div class="preview-icon">
+    📅
 </div>
 
 
-<!-- FOOTER -->
+<div class="preview-label">
+    DATE
+</div>
+
+
+<div
+    class="preview-value"
+    id="preview-date"
+>
+
+{% if reminder.reminder_date %}
+
+    {{ reminder.reminder_date.strftime(
+        '%d %B %Y'
+    ) }}
+
+{% else %}
+
+    Not selected
+
+{% endif %}
+
+</div>
+
+
+</div>
+
+
+
+<!-- TIME -->
+
+<div class="preview-box">
+
+
+<div class="preview-icon">
+    🕐
+</div>
+
+
+<div class="preview-label">
+    TIME
+</div>
+
+
+<div
+    class="preview-value"
+    id="preview-time"
+>
+
+{% if reminder.reminder_time %}
+
+    {{ reminder.reminder_time.strftime(
+        '%I:%M %p'
+    ) }}
+
+{% else %}
+
+    Not selected
+
+{% endif %}
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
 
 <div class="form-footer">
 
+
 <div class="footer-note">
-🔒 Your changes will be saved securely.
+
+    🔒 Your changes will be saved securely.
+
 </div>
+
+
 
 <div class="button-group">
 
-<a href="{{ url_for('reminders') }}"
-   class="button button-secondary">
-← Cancel
+
+<a
+    href="{{ url_for('reminders') }}"
+    class="button button-secondary"
+>
+    ← Cancel
 </a>
 
-<button type="submit"
-        class="button button-primary">
-💾 Save Changes
+
+<button
+    type="submit"
+    class="button button-primary"
+>
+    💾 Save Changes
 </button>
 
+
 </div>
+
 
 </div>
 
 
 </form>
 
+
 </main>
 
+{% endblock %}
 
-<script src="{{ url_for('static', filename='js/reminder-theme.js') }}"></script>
+
+
+{% block scripts %}
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/reminder-theme.js'
+    ) }}"
+></script>
 
 
 <script>
 
-/* =========================================================
+/* =====================================================
    LIVE PREVIEW
-========================================================= */
+===================================================== */
 
-const titleInput =
-    document.getElementById("title");
-
-const placeInput =
-    document.getElementById("place");
-
-const dateInput =
-    document.getElementById("reminder_date");
-
-const timeInput =
-    document.getElementById("reminder_time");
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
 
-titleInput.addEventListener("input", () => {
-
-    document.getElementById("preview-title").textContent =
-        titleInput.value || "Reminder";
-
-});
+        const titleInput =
+            document.getElementById(
+                "title"
+            );
 
 
-placeInput.addEventListener("input", () => {
-
-    document.getElementById("preview-place").textContent =
-        placeInput.value || "Not specified";
-
-});
+        const placeInput =
+            document.getElementById(
+                "place"
+            );
 
 
-dateInput.addEventListener("change", () => {
+        const dateInput =
+            document.getElementById(
+                "reminder_date"
+            );
 
-    if (!dateInput.value) return;
 
-    const date =
-        new Date(dateInput.value + "T00:00:00");
+        const timeInput =
+            document.getElementById(
+                "reminder_time"
+            );
 
-    document.getElementById("preview-date").textContent =
-        date.toLocaleDateString(
-            "en-IN",
-            {
-                day: "2-digit",
-                month: "long",
-                year: "numeric"
+
+        const previewTitle =
+            document.getElementById(
+                "preview-title"
+            );
+
+
+        const previewPlace =
+            document.getElementById(
+                "preview-place"
+            );
+
+
+        const previewDate =
+            document.getElementById(
+                "preview-date"
+            );
+
+
+        const previewTime =
+            document.getElementById(
+                "preview-time"
+            );
+
+
+
+        /* ===============================================
+           TITLE
+        =============================================== */
+
+        titleInput.addEventListener(
+            "input",
+            function () {
+
+                previewTitle.textContent =
+                    titleInput.value.trim()
+                    ||
+                    "Reminder";
+
             }
         );
 
-});
 
 
-timeInput.addEventListener("change", () => {
+        /* ===============================================
+           PLACE
+        =============================================== */
 
-    if (!timeInput.value) return;
+        placeInput.addEventListener(
+            "input",
+            function () {
 
-    const [h,m] =
-        timeInput.value.split(":");
+                previewPlace.textContent =
+                    placeInput.value.trim()
+                    ||
+                    "Not specified";
 
-    let hour =
-        parseInt(h,10);
-
-    const period =
-        hour >= 12 ? "PM" : "AM";
-
-    hour =
-        hour % 12 || 12;
-
-    document.getElementById("preview-time").textContent =
-        `${String(hour).padStart(2,"0")}:${m} ${period}`;
-
-});
-
-
-/* =========================================================
-   BACKGROUND PERIOD
-========================================================= */
-
-const periodButtons =
-    document.querySelectorAll(".time-option");
-
-
-function automaticPeriod() {
-
-    const hour =
-        new Date().getHours();
-
-    if (hour >= 5 && hour < 12)
-        return "morning";
-
-    if (hour >= 12 && hour < 18)
-        return "afternoon";
-
-    if (hour >= 18 && hour < 21)
-        return "evening";
-
-    return "night";
-}
-
-
-function applyPeriod(period) {
-
-    [
-        "morning",
-        "afternoon",
-        "evening",
-        "night"
-    ].forEach(item => {
-
-        document.body.classList.remove(
-            "period-" + item
+            }
         );
 
-    });
 
 
-    const actual =
-        period === "auto"
-            ? automaticPeriod()
-            : period;
+        /* ===============================================
+           DATE
+        =============================================== */
+
+        dateInput.addEventListener(
+            "change",
+            function () {
 
 
-    document.body.classList.add(
-        "period-" + actual
-    );
+                if (
+                    !dateInput.value
+                ) {
+
+                    previewDate.textContent =
+                        "Not selected";
+
+                    return;
+
+                }
 
 
-    periodButtons.forEach(button => {
+                const date =
+                    new Date(
+                        dateInput.value
+                        +
+                        "T00:00:00"
+                    );
 
-        button.classList.toggle(
-            "active",
-            button.dataset.period === period
+
+                previewDate.textContent =
+                    date.toLocaleDateString(
+                        "en-IN",
+                        {
+                            day:
+                                "2-digit",
+
+                            month:
+                                "long",
+
+                            year:
+                                "numeric"
+                        }
+                    );
+
+            }
         );
 
-    });
-
-}
 
 
-periodButtons.forEach(button => {
+        /* ===============================================
+           TIME
+        =============================================== */
 
-    button.addEventListener(
-        "click",
-        () => {
+        timeInput.addEventListener(
+            "change",
+            function () {
 
-            const period =
-                button.dataset.period;
 
-            localStorage.setItem(
-                "bday_reminder_period",
-                period
+                if (
+                    !timeInput.value
+                ) {
+
+                    previewTime.textContent =
+                        "Not selected";
+
+                    return;
+
+                }
+
+
+                const parts =
+                    timeInput.value.split(
+                        ":"
+                    );
+
+
+                let hour =
+                    parseInt(
+                        parts[0],
+                        10
+                    );
+
+
+                const minute =
+                    parts[1];
+
+
+                const period =
+                    hour >= 12
+                        ? "PM"
+                        : "AM";
+
+
+                hour =
+                    hour % 12 || 12;
+
+
+                previewTime.textContent =
+                    `${String(hour).padStart(2,"0")}:${minute} ${period}`;
+
+            }
+        );
+
+
+
+        /* ===============================================
+           TIME PERIOD
+        =============================================== */
+
+        const periodButtons =
+            document.querySelectorAll(
+                ".time-option"
             );
 
-            applyPeriod(period);
+
+        function automaticPeriod() {
+
+
+            const hour =
+                new Date().getHours();
+
+
+            if (
+                hour >= 5 &&
+                hour < 12
+            ) {
+
+                return "morning";
+
+            }
+
+
+            if (
+                hour >= 12 &&
+                hour < 18
+            ) {
+
+                return "afternoon";
+
+            }
+
+
+            if (
+                hour >= 18 &&
+                hour < 21
+            ) {
+
+                return "evening";
+
+            }
+
+
+            return "night";
 
         }
-    );
-
-});
 
 
-const savedPeriod =
-    localStorage.getItem(
-        "bday_reminder_period"
-    ) || "auto";
+
+        function applyPeriod(
+            period
+        ) {
 
 
-applyPeriod(savedPeriod);
+            const periods = [
+                "morning",
+                "afternoon",
+                "evening",
+                "night"
+            ];
 
 
-setInterval(() => {
+            periods.forEach(
+                function (item) {
 
-    if (
-        !localStorage.getItem(
-            "bday_reminder_period"
-        ) ||
-        localStorage.getItem(
-            "bday_reminder_period"
-        ) === "auto"
-    ) {
+                    document.body.classList.remove(
+                        "period-" + item
+                    );
 
-        applyPeriod("auto");
+                }
+            );
+
+
+            const actual =
+                period === "auto"
+                    ? automaticPeriod()
+                    : period;
+
+
+            document.body.classList.add(
+                "period-" + actual
+            );
+
+
+            periodButtons.forEach(
+                function (button) {
+
+                    button.classList.toggle(
+                        "active",
+                        button.dataset.period ===
+                        period
+                    );
+
+                }
+            );
+
+        }
+
+
+
+        periodButtons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+
+                        const period =
+                            button.dataset.period;
+
+
+                        localStorage.setItem(
+                            "bday_reminder_period",
+                            period
+                        );
+
+
+                        applyPeriod(
+                            period
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+
+        const savedPeriod =
+            localStorage.getItem(
+                "bday_reminder_period"
+            )
+            ||
+            "auto";
+
+
+        applyPeriod(
+            savedPeriod
+        );
+
+
+
+        /* ===============================================
+           AUTO UPDATE
+        =============================================== */
+
+        setInterval(
+            function () {
+
+
+                const current =
+                    localStorage.getItem(
+                        "bday_reminder_period"
+                    );
+
+
+                if (
+                    !current ||
+                    current === "auto"
+                ) {
+
+                    applyPeriod(
+                        "auto"
+                    );
+
+                }
+
+            },
+            60000
+        );
 
     }
-
-},60000);
+);
 
 </script>
 
-</body>
-</html>
+{% endblock %}

@@ -1,31 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
 
-    <meta charset="UTF-8">
+{% block title %}
+Chat | Bday Reminder
+{% endblock %}
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
 
-    <meta
-        name="theme-color"
-        content="#128c7e"
-    >
+{% block head %}
 
-    <title>
-        Chat | Bday Reminder
-    </title>
+<!-- =====================================================
+     CHAT PAGE
+     Common CSS is already loaded by base.html
+====================================================== -->
 
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}"
-    >
+{% endblock %}
 
-</head>
 
+
+{% block content %}
 
 <body class="app-page">
 
@@ -38,6 +30,7 @@
     ================================================== -->
 
     <header class="main-header">
+
 
         <a
             href="{{ url_for('home') }}"
@@ -56,6 +49,7 @@
 
 
         <nav class="desktop-navigation">
+
 
             <a
                 href="{{ url_for('home') }}"
@@ -99,10 +93,12 @@
                 ⚙️ Settings
             </a>
 
+
         </nav>
 
 
         <div class="header-actions">
+
 
             <button
                 id="theme-toggle"
@@ -121,9 +117,12 @@
                 Logout
             </a>
 
+
         </div>
 
+
     </header>
+
 
 
     <!-- =================================================
@@ -139,17 +138,21 @@
 
         <section class="assistant-header">
 
+
             <div class="assistant-title">
+
 
                 <div class="assistant-avatar">
                     🤖
                 </div>
+
 
                 <div>
 
                     <h1>
                         Reminder Assistant
                     </h1>
+
 
                     <p>
                         Create reminders and birthdays
@@ -158,9 +161,12 @@
 
                 </div>
 
+
             </div>
 
+
         </section>
+
 
 
         <!-- =================================================
@@ -173,7 +179,9 @@
         >
 
 
-            <!-- TIME EVENT -->
+            <!-- =================================================
+                 TIME EVENT
+            ================================================== -->
 
             <button
                 type="button"
@@ -181,9 +189,11 @@
                 data-mode="reminder"
             >
 
+
                 <span class="type-icon">
                     ⏰
                 </span>
+
 
                 <span>
 
@@ -191,16 +201,21 @@
                         Time Event
                     </strong>
 
+
                     <small>
                         Create a reminder
                     </small>
 
                 </span>
 
+
             </button>
 
 
-            <!-- BIRTHDAY -->
+
+            <!-- =================================================
+                 BIRTHDAY
+            ================================================== -->
 
             <button
                 type="button"
@@ -208,9 +223,11 @@
                 data-mode="birthday"
             >
 
+
                 <span class="type-icon">
                     🎂
                 </span>
+
 
                 <span>
 
@@ -218,16 +235,19 @@
                         Birthday
                     </strong>
 
+
                     <small>
                         Save a birthday
                     </small>
 
                 </span>
 
+
             </button>
 
 
         </section>
+
 
 
         <!-- =================================================
@@ -243,44 +263,62 @@
                 aria-live="polite"
             >
 
-                <!-- INITIAL BOT MESSAGE -->
+
+                <!-- =================================================
+                     INITIAL BOT MESSAGE
+                ================================================= -->
 
                 <div class="chat-message-row bot">
 
+
                     <div class="chat-bubble">
+
 
                         👋 Hello!
 
+
                         <br><br>
+
 
                         I can help you create:
 
+
                         <br>
+
 
                         ⏰ Time event reminders
 
+
                         <br>
+
 
                         🎂 Birthday reminders
 
+
                         <br><br>
+
 
                         Choose a type above and
                         tell me what you want.
+
 
                         <span class="chat-time">
                             Now
                         </span>
 
+
                     </div>
 
+
                 </div>
+
 
             </div>
 
 
+
             <!-- =================================================
-                 INPUT
+                 INPUT AREA
             ================================================== -->
 
             <div class="chat-input-area">
@@ -298,6 +336,7 @@
                     id="chat-form"
                     autocomplete="off"
                 >
+
 
                     <textarea
                         id="chat-message"
@@ -318,7 +357,9 @@
                         ➤
                     </button>
 
+
                 </form>
+
 
             </div>
 
@@ -331,23 +372,37 @@
 
 </div>
 
+{% endblock %}
+
+
+
+{% block scripts %}
 
 <!-- =====================================================
-     ONLY CHAT JS
-     
-     IMPORTANT:
-     Do NOT load app.js here.
+     CHAT JAVASCRIPT
 ====================================================== -->
 
 <script
-    src="{{ url_for('static', filename='js/chat.js', v='final1') }}"
+    src="{{ url_for(
+        'static',
+        filename='js/chat.js',
+        v='final1'
+    ) }}"
     defer
 ></script>
+
+
+<!-- =====================================================
+     NOTIFICATION / APP JAVASCRIPT
+====================================================== -->
 
 <script
-    src="{{ url_for('static', filename='js/app.js', v='notification-final') }}"
+    src="{{ url_for(
+        'static',
+        filename='js/app.js',
+        v='notification-final'
+    ) }}"
     defer
 ></script>
 
-</body>
-</html>
+{% endblock %}

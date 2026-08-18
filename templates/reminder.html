@@ -1,17 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
 
-<meta charset="UTF-8">
+{% block title %}
+Reminders | Bday Reminder
+{% endblock %}
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
 
-<title>Reminders | Bday Reminder</title>
+{% block head %}
 
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='css/reminder-theme.css') }}">
+<!-- =====================================================
+     REMINDER-SPECIFIC CSS
+     Common CSS + PWA are handled by base.html
+====================================================== -->
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/reminder-theme.css') }}"
+>
+
 
 <style>
 
@@ -1353,11 +1359,11 @@ body.period-night .sky-object {
 
 </style>
 
-</head>
+{% endblock %}
 
 
-<body>
 
+{% block content %}
 
 <!-- =====================================================
      BACKGROUND
@@ -1622,15 +1628,22 @@ body.period-night .sky-object {
 
 </main>
 
+{% endblock %}
+
+
+
+{% block scripts %}
 
 <!-- =====================================================
      THEME ENGINE
 ===================================================== -->
 
-<script src="{{ url_for(
-    'static',
-    filename='js/reminder-theme.js'
-) }}"></script>
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/reminder-theme.js'
+    ) }}"
+></script>
 
 
 <!-- =====================================================
@@ -2320,7 +2333,4 @@ renderReminders();
 
 </script>
 
-
-</body>
-
-</html>
+{% endblock %}

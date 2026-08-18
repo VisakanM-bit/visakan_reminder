@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#ffffff"
+    >
+
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="default"
+    >
+
+    <meta
+        name="apple-mobile-web-app-title"
+        content="Bday Reminder"
+    >
+
+    <!-- PWA MANIFEST -->
+    <link
+        rel="manifest"
+        href="{{ url_for('static', filename='manifest.json') }}"
+    >
+
+    <!-- APPLE / IOS ICON -->
+    <link
+        rel="apple-touch-icon"
+        href="{{ url_for('static', filename='icons/icon-192.png') }}"
+    >
+
+    <!-- COMMON CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <title>
+        {% block title %}
+        Bday Reminder
+        {% endblock %}
+    </title>
+
+    {% block head %}
+    {% endblock %}
+
+</head>
+
+
+<body>
+
+    {% block content %}
+    {% endblock %}
+
+
+    <!-- COMMON PWA REGISTRATION -->
+    <script
+        src="{{ url_for('static', filename='js/pwa.js') }}"
+        defer
+    ></script>
+
+
+    {% block scripts %}
+    {% endblock %}
+
+</body>
+
+</html>
