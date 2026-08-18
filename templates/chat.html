@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#128c7e"
+    >
+
+    <title>
+        Chat | Bday Reminder
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body class="app-page">
+
+
+<div class="app-shell">
+
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <header class="main-header">
+
+        <a
+            href="{{ url_for('home') }}"
+            class="brand"
+        >
+
+            <span class="brand-icon">
+                📅
+            </span>
+
+            <span>
+                Bday Reminder
+            </span>
+
+        </a>
+
+
+        <nav class="desktop-navigation">
+
+            <a
+                href="{{ url_for('home') }}"
+            >
+                🏠 Dashboard
+            </a>
+
+
+            <a
+                href="{{ url_for('chat_page') }}"
+                class="active"
+            >
+                💬 Chat
+            </a>
+
+
+            <a
+                href="{{ url_for('birthdays') }}"
+            >
+                🎂 Birthdays
+            </a>
+
+
+            <a
+                href="{{ url_for('reminders') }}"
+            >
+                ⏰ Reminders
+            </a>
+
+
+            <a
+                href="{{ url_for('history') }}"
+            >
+                📜 History
+            </a>
+
+
+            <a
+                href="{{ url_for('settings') }}"
+            >
+                ⚙️ Settings
+            </a>
+
+        </nav>
+
+
+        <div class="header-actions">
+
+            <button
+                id="theme-toggle"
+                class="theme-toggle"
+                type="button"
+                aria-label="Toggle theme"
+            >
+                🌙
+            </button>
+
+
+            <a
+                href="{{ url_for('logout') }}"
+                class="logout-button"
+            >
+                Logout
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- =================================================
+         CHAT PAGE
+    ================================================== -->
+
+    <main class="assistant-page">
+
+
+        <!-- =================================================
+             ASSISTANT HEADER
+        ================================================== -->
+
+        <section class="assistant-header">
+
+            <div class="assistant-title">
+
+                <div class="assistant-avatar">
+                    🤖
+                </div>
+
+                <div>
+
+                    <h1>
+                        Reminder Assistant
+                    </h1>
+
+                    <p>
+                        Create reminders and birthdays
+                        using natural language.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TYPE SELECTION
+        ================================================== -->
+
+        <section
+            class="assistant-types"
+            aria-label="Choose reminder type"
+        >
+
+
+            <!-- TIME EVENT -->
+
+            <button
+                type="button"
+                class="type-card reminder-type active"
+                data-mode="reminder"
+            >
+
+                <span class="type-icon">
+                    ⏰
+                </span>
+
+                <span>
+
+                    <strong>
+                        Time Event
+                    </strong>
+
+                    <small>
+                        Create a reminder
+                    </small>
+
+                </span>
+
+            </button>
+
+
+            <!-- BIRTHDAY -->
+
+            <button
+                type="button"
+                class="type-card birthday-type"
+                data-mode="birthday"
+            >
+
+                <span class="type-icon">
+                    🎂
+                </span>
+
+                <span>
+
+                    <strong>
+                        Birthday
+                    </strong>
+
+                    <small>
+                        Save a birthday
+                    </small>
+
+                </span>
+
+            </button>
+
+
+        </section>
+
+
+        <!-- =================================================
+             CHAT WINDOW
+        ================================================== -->
+
+        <section class="assistant-chat">
+
+
+            <div
+                id="chat-messages"
+                class="chat-messages"
+                aria-live="polite"
+            >
+
+                <!-- INITIAL BOT MESSAGE -->
+
+                <div class="chat-message-row bot">
+
+                    <div class="chat-bubble">
+
+                        👋 Hello!
+
+                        <br><br>
+
+                        I can help you create:
+
+                        <br>
+
+                        ⏰ Time event reminders
+
+                        <br>
+
+                        🎂 Birthday reminders
+
+                        <br><br>
+
+                        Choose a type above and
+                        tell me what you want.
+
+                        <span class="chat-time">
+                            Now
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 INPUT
+            ================================================== -->
+
+            <div class="chat-input-area">
+
+
+                <div
+                    id="selected-mode"
+                    class="selected-mode"
+                >
+                    ⏰ Time Event Reminder
+                </div>
+
+
+                <form
+                    id="chat-form"
+                    autocomplete="off"
+                >
+
+                    <textarea
+                        id="chat-message"
+                        name="message"
+                        rows="1"
+                        maxlength="1000"
+                        placeholder="Type your reminder..."
+                        required
+                        aria-label="Type your message"
+                    ></textarea>
+
+
+                    <button
+                        id="chat-send"
+                        type="submit"
+                        aria-label="Send message"
+                    >
+                        ➤
+                    </button>
+
+                </form>
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+<!-- =====================================================
+     ONLY CHAT JS
+     
+     IMPORTANT:
+     Do NOT load app.js here.
+====================================================== -->
+
+<script
+    src="{{ url_for('static', filename='js/chat.js', v='final1') }}"
+    defer
+></script>
+
+<script
+    src="{{ url_for('static', filename='js/app.js', v='notification-final') }}"
+    defer
+></script>
+
+</body>
+</html>

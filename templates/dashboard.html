@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Bday Reminder</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="dashboard-layout">
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="dashboard-sidebar">
+
+        <div class="brand">
+            🎂 Bday Reminder
+        </div>
+
+
+        <nav>
+
+            <a
+                href="{{ url_for('home') }}"
+                class="nav-item active"
+            >
+                🏠 Dashboard
+            </a>
+
+
+            <a
+                href="{{ url_for('birthdays') }}"
+                class="nav-item"
+            >
+                🎂 Birthdays
+            </a>
+
+
+            <a
+                href="{{ url_for('reminders') }}"
+                class="nav-item"
+            >
+                ⏰ Reminders
+            </a>
+
+
+            <a
+                href="{{ url_for('chat_page') }}"
+                class="nav-item"
+            >
+                💬 Chat
+            </a>
+
+
+            <a
+    href="{{ url_for('history') }}"
+    class="nav-item"
+>
+    📜 History
+</a>
+
+
+            <!-- SETTINGS NOW OPENS SETTINGS PAGE -->
+
+            <a
+                href="{{ url_for('settings') }}"
+                class="nav-item"
+            >
+                ⚙️ Settings
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <a
+                href="{{ url_for('logout') }}"
+                class="nav-item logout"
+            >
+                🚪 Logout
+            </a>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="dashboard-main">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <header class="dashboard-header">
+
+            <div>
+
+                <h1>
+                    Dashboard
+                </h1>
+
+                <p>
+                    Manage your birthdays and reminders
+                </p>
+
+            </div>
+
+
+            <div class="user-profile">
+
+                <div class="user-avatar">
+
+                    {{ user.name[0].upper() }}
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        {{ user.name }}
+                    </strong>
+
+                    <small>
+                        {{ user.email }}
+                    </small>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             FLASH MESSAGES
+        ================================================== -->
+
+        {% with messages = get_flashed_messages(
+            with_categories=true
+        ) %}
+
+            {% if messages %}
+
+                <div class="flash-messages">
+
+                    {% for category, message in messages %}
+
+                        <div class="message {{ category }}">
+
+                            {{ message }}
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        {% endwith %}
+
+
+
+        <!-- =================================================
+             WELCOME
+        ================================================== -->
+
+        <section class="welcome-section">
+
+            <h2>
+                Hello, {{ user.name }} 👋
+            </h2>
+
+            <p>
+                Never miss an important birthday or task again.
+            </p>
+
+        </section>
+
+
+
+        <!-- =================================================
+             STATISTICS
+        ================================================== -->
+
+        <section class="stats-grid">
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    🎂
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Birthdays
+                    </span>
+
+                    <strong>
+                        {{ birthdays|length }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ⏰
+                </div>
+
+                <div>
+
+                    <span>
+                        Active Reminders
+                    </span>
+
+                    <strong>
+                        {{ reminders|length }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📅
+                </div>
+
+                <div>
+
+                    <span>
+                        Today's Events
+                    </span>
+
+                    <strong>
+                        {{ todays_count }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ✅
+                </div>
+
+                <div>
+
+                    <span>
+                        Completed
+                    </span>
+
+                    <strong>
+                        {{ completed_count }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+        ================================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Quick Actions
+                    </h2>
+
+                    <p>
+                        Add information quickly
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="quick-actions">
+
+
+                <a
+                    href="{{ url_for('add_birthday') }}"
+                    class="action-card"
+                >
+
+                    <div class="action-icon">
+                        🎂
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Add Birthday
+                        </h3>
+
+                        <p>
+                            Save a friend's birthday
+                        </p>
+
+                    </div>
+
+                </a>
+
+
+
+                <a
+                    href="{{ url_for('birthdays') }}"
+                    class="action-card"
+                >
+
+                    <div class="action-icon">
+                        👥
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            View Birthdays
+                        </h3>
+
+                        <p>
+                            Manage your friends
+                        </p>
+
+                    </div>
+
+                </a>
+
+
+
+                <a
+                    href="{{ url_for('add_reminder') }}"
+                    class="action-card"
+                >
+
+                    <div class="action-icon">
+                        ⏰
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Add Reminder
+                        </h3>
+
+                        <p>
+                            Create a time-based reminder
+                        </p>
+
+                    </div>
+
+                </a>
+
+
+
+                <a
+                    href="{{ url_for('chat_page') }}"
+                    class="action-card"
+                >
+
+                    <div class="action-icon">
+                        💬
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Chat Assistant
+                        </h3>
+
+                        <p>
+                            Tell the assistant what to remember
+                        </p>
+
+                    </div>
+
+                </a>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             YOUR BIRTHDAYS
+        ================================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        🎂 Your Birthdays
+                    </h2>
+
+                    <p>
+                        People you've added
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for('birthdays') }}"
+                    class="view-all"
+                >
+                    View all →
+                </a>
+
+            </div>
+
+
+            {% if birthdays %}
+
+                <div class="birthday-preview-grid">
+
+                    {% for person in birthdays[:4] %}
+
+                        <div class="birthday-preview">
+
+                            <div class="birthday-avatar">
+
+                                {{ person.name[0].upper() }}
+
+                            </div>
+
+
+                            <div>
+
+                                <h3>
+                                    {{ person.name }}
+                                </h3>
+
+
+                                <p>
+
+                                    🎂
+                                    {{ person.birthday.strftime(
+                                        "%d %B"
+                                    ) }}
+
+                                </p>
+
+
+                                {% if person.relationship %}
+
+                                    <small>
+                                        {{ person.relationship }}
+                                    </small>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <div>
+                        🎂
+                    </div>
+
+                    <h3>
+                        No birthdays added yet
+                    </h3>
+
+                    <p>
+                        Add your friends' birthdays so you never
+                        forget them.
+                    </p>
+
+                    <a
+                        href="{{ url_for('add_birthday') }}"
+                        class="primary-button"
+                    >
+                        + Add First Birthday
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+
+        <!-- =================================================
+             UPCOMING REMINDERS
+        ================================================== -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        ⏰ Upcoming Reminders
+                    </h2>
+
+                    <p>
+                        Your scheduled tasks
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="{{ url_for('reminders') }}"
+                    class="view-all"
+                >
+                    View all →
+                </a>
+
+            </div>
+
+
+            {% if reminders %}
+
+                <div class="birthday-preview-grid">
+
+                    {% for reminder in reminders[:4] %}
+
+                        <div class="birthday-preview">
+
+                            <div class="birthday-avatar">
+                                ⏰
+                            </div>
+
+
+                            <div>
+
+                                <h3>
+                                    {{ reminder.title }}
+                                </h3>
+
+
+                                {% if reminder.description %}
+
+                                    <p>
+                                        {{ reminder.description }}
+                                    </p>
+
+                                {% endif %}
+
+
+                                <p>
+
+                                    📅
+                                    {{ reminder.reminder_date.strftime(
+                                        "%d %B %Y"
+                                    ) }}
+
+                                </p>
+
+
+                                <small>
+
+                                    🕐
+                                    {{ reminder.reminder_time.strftime(
+                                        "%I:%M %p"
+                                    ) }}
+
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+            {% else %}
+
+                <div class="empty-state small">
+
+                    <div>
+                        ⏰
+                    </div>
+
+                    <h3>
+                        No reminders yet
+                    </h3>
+
+                    <p>
+                        Create your first reminder and never forget
+                        an important task again.
+                    </p>
+
+                    <a
+                        href="{{ url_for('add_reminder') }}"
+                        class="primary-button"
+                    >
+                        + Create Reminder
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+
+        <!-- =================================================
+             HISTORY
+        ================================================== -->
+
+        </section>
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        📜 History
+                    </h2>
+
+                    <p>
+                        Your completed reminders.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% if completed_count > 0 %}
+
+                <div class="empty-state small">
+
+                    <div>
+                        ✅
+                    </div>
+
+                    <h3>
+
+                        {{ completed_count }}
+
+                        completed reminder
+
+                        {% if completed_count != 1 %}
+                            s
+                        {% endif %}
+
+                    </h3>
+
+                    <p>
+                        Your completed reminders are safely stored.
+                    </p>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state small">
+
+                    <div>
+                        📜
+                    </div>
+
+                    <h3>
+                        No completed reminders
+                    </h3>
+
+                    <p>
+                        Completed reminders will appear here.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+
+        <!-- =================================================
+             SETTINGS PLACEHOLDER REMOVED
+             
+             Settings is now a separate page:
+             /settings
+        ================================================== -->
+
+
+    </main>
+
+</div>
+
+
+
+<!-- =========================================================
+     FLOATING NOTIFICATION SYSTEM
+========================================================= -->
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/app.js'
+    ) }}"
+></script>
+
+
+</body>
+
+</html>

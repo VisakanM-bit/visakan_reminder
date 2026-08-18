@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>History | Bday Reminder</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <style>
+
+        /* =====================================================
+           HISTORY PAGE
+        ===================================================== */
+
+        .history-page {
+
+            min-height: 100vh;
+
+            padding: 30px 35px 50px;
+
+            position: relative;
+
+            z-index: 5;
+
+        }
+
+
+        .history-container {
+
+            max-width: 1150px;
+
+            margin: 0 auto;
+
+        }
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .history-header {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+
+            margin-bottom: 28px;
+
+        }
+
+
+        .history-back {
+
+            width: 46px;
+
+            height: 46px;
+
+            border: none;
+
+            border-radius: 14px;
+
+            background: rgba(
+                255,
+                255,
+                255,
+                .94
+            );
+
+            box-shadow:
+                0 8px 25px rgba(
+                    15,
+                    23,
+                    42,
+                    .12
+                );
+
+            font-size: 22px;
+
+            cursor: pointer;
+
+            transition: .2s ease;
+
+        }
+
+
+        .history-back:hover {
+
+            transform:
+                translateY(-2px);
+
+        }
+
+
+        .history-title {
+
+            flex: 1;
+
+        }
+
+
+        .history-title h1 {
+
+            margin: 0;
+
+            font-size: 29px;
+
+            color: #172033;
+
+        }
+
+
+        .history-title p {
+
+            margin: 5px 0 0;
+
+            color: #64748b;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =====================================================
+           SUMMARY
+        ===================================================== */
+
+        .history-summary {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 15px;
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .history-stat {
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .94
+                );
+
+            border-radius: 18px;
+
+            padding: 18px;
+
+            box-shadow:
+                0 8px 28px rgba(
+                    15,
+                    23,
+                    42,
+                    .09
+                );
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 14px;
+
+        }
+
+
+        .history-stat-icon {
+
+            width: 48px;
+
+            height: 48px;
+
+            border-radius: 15px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 22px;
+
+        }
+
+
+        .history-stat:nth-child(1)
+        .history-stat-icon {
+
+            background: #eef2ff;
+
+        }
+
+
+        .history-stat:nth-child(2)
+        .history-stat-icon {
+
+            background: #fdf2f8;
+
+        }
+
+
+        .history-stat:nth-child(3)
+        .history-stat-icon {
+
+            background: #ecfdf5;
+
+        }
+
+
+        .history-stat span {
+
+            display: block;
+
+            font-size: 12px;
+
+            color: #64748b;
+
+        }
+
+
+        .history-stat strong {
+
+            display: block;
+
+            margin-top: 3px;
+
+            font-size: 22px;
+
+            color: #172033;
+
+        }
+
+
+        /* =====================================================
+           TWO COLUMNS
+        ===================================================== */
+
+        .history-columns {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 22px;
+
+            align-items: start;
+
+        }
+
+
+        .history-card {
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .95
+                );
+
+            border-radius: 22px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 35px rgba(
+                    15,
+                    23,
+                    42,
+                    .10
+                );
+
+        }
+
+
+        /* =====================================================
+           CARD HEADER
+        ===================================================== */
+
+        .history-card-header {
+
+            padding: 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 13px;
+
+            border-bottom:
+                1px solid
+                rgba(
+                    15,
+                    23,
+                    42,
+                    .06
+                );
+
+        }
+
+
+        .history-card-icon {
+
+            width: 45px;
+
+            height: 45px;
+
+            border-radius: 14px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 21px;
+
+        }
+
+
+        .reminder-header-icon {
+
+            background: #fff7ed;
+
+        }
+
+
+        .birthday-header-icon {
+
+            background: #fdf2f8;
+
+        }
+
+
+        .history-card-header h2 {
+
+            margin: 0;
+
+            font-size: 17px;
+
+            color: #172033;
+
+        }
+
+
+        .history-card-header p {
+
+            margin: 4px 0 0;
+
+            font-size: 12px;
+
+            color: #64748b;
+
+        }
+
+
+        /* =====================================================
+           HISTORY LIST
+        ===================================================== */
+
+        .history-list {
+
+            padding: 8px 20px 18px;
+
+        }
+
+
+        .history-item {
+
+            display: flex;
+
+            gap: 13px;
+
+            padding: 16px 0;
+
+            border-bottom:
+                1px solid
+                rgba(
+                    15,
+                    23,
+                    42,
+                    .055
+                );
+
+        }
+
+
+        .history-item:last-child {
+
+            border-bottom: none;
+
+        }
+
+
+        .history-item-icon {
+
+            width: 40px;
+
+            height: 40px;
+
+            flex-shrink: 0;
+
+            border-radius: 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #f8fafc;
+
+            font-size: 18px;
+
+        }
+
+
+        .history-item-content {
+
+            min-width: 0;
+
+            flex: 1;
+
+        }
+
+
+        .history-item-content h3 {
+
+            margin: 0;
+
+            font-size: 14px;
+
+            color: #172033;
+
+            word-break: break-word;
+
+        }
+
+
+        .history-item-content p {
+
+            margin: 5px 0 0;
+
+            font-size: 12px;
+
+            color: #64748b;
+
+            line-height: 1.5;
+
+        }
+
+
+        .history-meta {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 7px;
+
+            margin-top: 8px;
+
+        }
+
+
+        .history-tag {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            padding: 5px 8px;
+
+            border-radius: 8px;
+
+            background: #f1f5f9;
+
+            color: #475569;
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+        }
+
+
+        .completed-tag {
+
+            background: #ecfdf5;
+
+            color: #047857;
+
+        }
+
+
+        .birthday-tag {
+
+            background: #fdf2f8;
+
+            color: #be185d;
+
+        }
+
+
+        .pending-tag {
+
+            background: #fff7ed;
+
+            color: #c2410c;
+
+        }
+
+
+        /* =====================================================
+           EMPTY STATE
+        ===================================================== */
+
+        .history-empty {
+
+            text-align: center;
+
+            padding: 55px 20px;
+
+            color: #64748b;
+
+        }
+
+
+        .history-empty-icon {
+
+            font-size: 38px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .history-empty h3 {
+
+            margin: 0;
+
+            color: #172033;
+
+            font-size: 16px;
+
+        }
+
+
+        .history-empty p {
+
+            margin: 7px auto 0;
+
+            max-width: 300px;
+
+            font-size: 12px;
+
+            line-height: 1.6;
+
+        }
+
+
+        /* =====================================================
+           SEARCH / FILTER
+        ===================================================== */
+
+        .history-tools {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .history-search {
+
+            width: 250px;
+
+            padding: 11px 14px;
+
+            border-radius: 12px;
+
+            border:
+                1px solid #e2e8f0;
+
+            outline: none;
+
+            background: white;
+
+            color: #172033;
+
+            font-size: 13px;
+
+        }
+
+
+        .history-search:focus {
+
+            border-color: #818cf8;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(
+                    99,
+                    102,
+                    241,
+                    .10
+                );
+
+        }
+
+
+        /* =====================================================
+           DARK MODE
+        ===================================================== */
+
+        body.dark .history-title h1 {
+
+            color: #f8fafc;
+
+        }
+
+
+        body.dark .history-title p {
+
+            color: #cbd5e1;
+
+        }
+
+
+        body.dark .history-back {
+
+            background: #111827;
+
+            color: white;
+
+        }
+
+
+        body.dark .history-stat,
+        body.dark .history-card {
+
+            background:
+                rgba(
+                    17,
+                    24,
+                    39,
+                    .95
+                );
+
+        }
+
+
+        body.dark .history-stat strong,
+        body.dark .history-card-header h2,
+        body.dark .history-item-content h3,
+        body.dark .history-empty h3 {
+
+            color: #f8fafc;
+
+        }
+
+
+        body.dark .history-stat span,
+        body.dark .history-card-header p,
+        body.dark .history-item-content p,
+        body.dark .history-empty {
+
+            color: #cbd5e1;
+
+        }
+
+
+        body.dark .history-card-header,
+        body.dark .history-item {
+
+            border-color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .07
+                );
+
+        }
+
+
+        body.dark .history-item-icon,
+        body.dark .history-tag {
+
+            background: #1f2937;
+
+            color: #dbeafe;
+
+        }
+
+
+        body.dark .history-search {
+
+            background: #111827;
+
+            border-color: #374151;
+
+            color: white;
+
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 800px) {
+
+            .history-page {
+
+                padding:
+                    20px 15px 40px;
+
+            }
+
+
+            .history-columns {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .history-summary {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .history-title h1 {
+
+                font-size: 24px;
+
+            }
+
+
+            .history-search {
+
+                width: 100%;
+
+            }
+
+
+            .history-tools {
+
+                display: block;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     BACKGROUND
+========================================================= -->
+
+<div
+    id="time-background"
+    class="morning"
+>
+
+    <div class="sun"></div>
+
+    <div class="moon"></div>
+
+</div>
+
+
+
+<!-- =========================================================
+     HISTORY PAGE
+========================================================= -->
+
+<div class="history-page">
+
+    <div class="history-container">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <header class="history-header">
+
+            <button
+                class="history-back"
+                type="button"
+                onclick="window.location.href='{{ url_for('home') }}'"
+            >
+                ←
+            </button>
+
+
+            <div class="history-title">
+
+                <h1>
+                    📜 History
+                </h1>
+
+                <p>
+                    View your previous reminders and birthdays.
+                </p>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             SUMMARY
+        ================================================== -->
+
+        <section class="history-summary">
+
+
+            <div class="history-stat">
+
+                <div class="history-stat-icon">
+                    ⏰
+                </div>
+
+                <div>
+
+                    <span>
+                        Time Reminders
+                    </span>
+
+                    <strong>
+                        {{ reminders|length }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="history-stat">
+
+                <div class="history-stat-icon">
+                    🎂
+                </div>
+
+                <div>
+
+                    <span>
+                        Birthdays
+                    </span>
+
+                    <strong>
+                        {{ birthdays|length }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="history-stat">
+
+                <div class="history-stat-icon">
+                    📚
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Records
+                    </span>
+
+                    <strong>
+                        {{ reminders|length + birthdays|length }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SEARCH
+        ================================================== -->
+
+        <div class="history-tools">
+
+            <input
+                type="search"
+                id="history-search"
+                class="history-search"
+                placeholder="🔍 Search history..."
+            >
+
+        </div>
+
+
+
+        <!-- =================================================
+             TWO COLUMNS
+        ================================================== -->
+
+        <section class="history-columns">
+
+
+            <!-- =================================================
+                 TIME REMINDERS
+            ================================================== -->
+
+            <div class="history-card">
+
+                <div class="history-card-header">
+
+                    <div
+                        class="history-card-icon reminder-header-icon"
+                    >
+                        ⏰
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Time Reminder History
+                        </h2>
+
+                        <p>
+                            Your scheduled events
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="history-list"
+                    id="reminder-history"
+                >
+
+
+                    {% if reminders %}
+
+                        {% for reminder in reminders %}
+
+                            <div
+                                class="history-item searchable-item"
+                                data-search="
+                                    {{ reminder.title }}
+                                    {{ reminder.description or '' }}
+                                    {{ reminder.place or '' }}
+                                    {{ reminder.reminder_date }}
+                                "
+                            >
+
+                                <div class="history-item-icon">
+                                    ⏰
+                                </div>
+
+
+                                <div class="history-item-content">
+
+                                    <h3>
+                                        {{ reminder.title }}
+                                    </h3>
+
+
+                                    {% if reminder.description %}
+
+                                        <p>
+                                            {{ reminder.description }}
+                                        </p>
+
+                                    {% endif %}
+
+
+                                    <div class="history-meta">
+
+                                        <span class="history-tag">
+
+                                            📅
+                                            {{ reminder.reminder_date.strftime(
+                                                "%d %B %Y"
+                                            ) }}
+
+                                        </span>
+
+
+                                        <span class="history-tag">
+
+                                            🕐
+                                            {{ reminder.reminder_time.strftime(
+                                                "%I:%M %p"
+                                            ) }}
+
+                                        </span>
+
+
+                                        {% if reminder.place %}
+
+                                            <span class="history-tag">
+
+                                                📍
+                                                {{ reminder.place }}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        {% if reminder.status == "completed" %}
+
+                                            <span
+                                                class="
+                                                    history-tag
+                                                    completed-tag
+                                                "
+                                            >
+                                                ✓ Completed
+                                            </span>
+
+                                        {% else %}
+
+                                            <span
+                                                class="
+                                                    history-tag
+                                                    pending-tag
+                                                "
+                                            >
+                                                ⏳
+                                                {{ reminder.status|capitalize }}
+                                            </span>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+
+                    {% else %}
+
+                        <div class="history-empty">
+
+                            <div class="history-empty-icon">
+                                ⏰
+                            </div>
+
+                            <h3>
+                                No reminder history
+                            </h3>
+
+                            <p>
+                                Your time-based reminders will
+                                appear here.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+                 BIRTHDAYS
+            ================================================== -->
+
+            <div class="history-card">
+
+                <div class="history-card-header">
+
+                    <div
+                        class="history-card-icon birthday-header-icon"
+                    >
+                        🎂
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Birthday History
+                        </h2>
+
+                        <p>
+                            Your saved birthdays
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="history-list"
+                    id="birthday-history"
+                >
+
+
+                    {% if birthdays %}
+
+                        {% for person in birthdays %}
+
+                            <div
+                                class="history-item searchable-item"
+                                data-search="
+                                    {{ person.name }}
+                                    {{ person.relationship or '' }}
+                                    {{ person.birthday }}
+                                    {{ person.notes or '' }}
+                                "
+                            >
+
+                                <div class="history-item-icon">
+                                    🎂
+                                </div>
+
+
+                                <div class="history-item-content">
+
+                                    <h3>
+                                        {{ person.name }}
+                                    </h3>
+
+
+                                    <p>
+
+                                        🎂 Birthday:
+                                        {{ person.birthday.strftime(
+                                            "%d %B"
+                                        ) }}
+
+                                    </p>
+
+
+                                    <div class="history-meta">
+
+
+                                        <span
+                                            class="
+                                                history-tag
+                                                birthday-tag
+                                            "
+                                        >
+
+                                            🎂
+                                            {{ person.birthday.strftime(
+                                                "%d %B %Y"
+                                            ) }}
+
+                                        </span>
+
+
+                                        {% if person.relationship %}
+
+                                            <span
+                                                class="history-tag"
+                                            >
+
+                                                👤
+                                                {{ person.relationship }}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        {% if person.phone %}
+
+                                            <span
+                                                class="history-tag"
+                                            >
+
+                                                📱
+                                                {{ person.phone }}
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+
+                    {% else %}
+
+                        <div class="history-empty">
+
+                            <div class="history-empty-icon">
+                                🎂
+                            </div>
+
+                            <h3>
+                                No birthday history
+                            </h3>
+
+                            <p>
+                                Your saved birthdays will appear
+                                here.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
+
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <div
+            style="
+                text-align:center;
+                padding:25px 0 5px;
+                font-size:11px;
+                opacity:.5;
+            "
+        >
+
+            Bday Reminder • History
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /* =================================================
+           SEARCH
+        ================================================= */
+
+        const search =
+            document.getElementById(
+                "history-search"
+            );
+
+
+        const items =
+            document.querySelectorAll(
+                ".searchable-item"
+            );
+
+
+        if (search) {
+
+            search.addEventListener(
+                "input",
+                function () {
+
+                    const query =
+                        search.value
+                            .toLowerCase()
+                            .trim();
+
+
+                    items.forEach(
+                        function (item) {
+
+                            const text =
+                                (
+                                    item.dataset.search
+                                    || ""
+                                )
+                                .toLowerCase();
+
+
+                            if (
+                                !query ||
+                                text.includes(query)
+                            ) {
+
+                                item.style.display =
+                                    "flex";
+
+                            }
+
+                            else {
+
+                                item.style.display =
+                                    "none";
+
+                            }
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           TIME BACKGROUND
+           Uses the same existing theme system
+        ================================================= */
+
+        const background =
+            document.getElementById(
+                "time-background"
+            );
+
+
+        if (background) {
+
+            function getPeriod() {
+
+                const hour =
+                    new Date().getHours();
+
+
+                if (hour < 12) {
+
+                    return "morning";
+
+                }
+
+
+                if (hour < 18) {
+
+                    return "afternoon";
+
+                }
+
+
+                if (hour < 20) {
+
+                    return "evening";
+
+                }
+
+
+                return "night";
+
+            }
+
+
+            const saved =
+                localStorage.getItem(
+                    "bday-reminder-period"
+                );
+
+
+            const period =
+                (
+                    !saved ||
+                    saved === "auto"
+                )
+                    ? getPeriod()
+                    : saved;
+
+
+            background.classList.remove(
+                "morning",
+                "afternoon",
+                "evening",
+                "night"
+            );
+
+
+            background.classList.add(
+                period
+            );
+
+        }
+
+
+        /* =================================================
+           DARK THEME
+        ================================================= */
+
+        const theme =
+            localStorage.getItem(
+                "bday-reminder-theme"
+            );
+
+
+        if (
+            theme === "dark"
+        ) {
+
+            document.body.classList.add(
+                "dark"
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>

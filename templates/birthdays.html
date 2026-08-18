@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>My Birthdays</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="dashboard">
+
+        <!-- PAGE HEADER -->
+
+        <h1>🎂 My Birthdays</h1>
+
+        <p>
+            Manage your friends' birthdays and important information.
+        </p>
+
+
+        <!-- ACTIONS -->
+
+        <div class="birthday-page-actions">
+
+            <a
+                href="{{ url_for('add_birthday') }}"
+                class="primary-button"
+            >
+                + Add Birthday
+            </a>
+
+            <a
+                href="{{ url_for('home') }}"
+                class="secondary-button"
+            >
+                ← Dashboard
+            </a>
+
+        </div>
+
+
+        <!-- FLASH MESSAGES -->
+
+        {% with messages = get_flashed_messages(
+            with_categories=true
+        ) %}
+
+            {% for category, message in messages %}
+
+                <div class="message {{ category }}">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endwith %}
+
+
+        <!-- BIRTHDAY LIST -->
+
+        {% if birthdays %}
+
+            <div class="birthdays-grid">
+
+                {% for person in birthdays %}
+
+                    <div class="birthday-card">
+
+                        <!-- PERSON HEADER -->
+
+                        <div class="birthday-card-header">
+
+                            <div class="birthday-avatar">
+
+                                {{ person.name[0].upper() }}
+
+                            </div>
+
+                            <div>
+
+                                <h2>
+                                    {{ person.name }}
+                                </h2>
+
+                                {% if person.relationship %}
+
+                                    <p class="relationship">
+
+                                        {{ person.relationship }}
+
+                                    </p>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- BIRTHDAY -->
+
+                        <div class="birthday-info">
+
+                            <p>
+
+                                <strong>
+                                    🎂 Birthday
+                                </strong>
+
+                                <br>
+
+                                {{ person.birthday.strftime("%d %B %Y") }}
+
+                            </p>
+
+
+                            <!-- PHONE -->
+
+                            {% if person.phone %}
+
+                                <p>
+
+                                    <strong>
+                                        📱 Phone
+                                    </strong>
+
+                                    <br>
+
+                                    {{ person.phone }}
+
+                                </p>
+
+                            {% endif %}
+
+
+                            <!-- NOTES -->
+
+                            {% if person.notes %}
+
+                                <p>
+
+                                    <strong>
+                                        📝 Notes
+                                    </strong>
+
+                                    <br>
+
+                                    {{ person.notes }}
+
+                                </p>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- ACTION BUTTONS -->
+
+                        <div class="birthday-actions">
+
+                            <a
+                                href="{{ url_for(
+                                    'edit_birthday',
+                                    birthday_id=person.id
+                                ) }}"
+                                class="edit-button"
+                            >
+                                ✏️ Edit
+                            </a>
+
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'delete_birthday',
+                                    birthday_id=person.id
+                                ) }}"
+                                onsubmit="return confirm(
+                                    'Are you sure you want to delete {{ person.name }}\\'s birthday?'
+                                );"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="delete-button"
+                                >
+                                    🗑️ Delete
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+        {% else %}
+
+            <!-- EMPTY STATE -->
+
+            <div class="empty-state">
+
+                <div>
+                    🎂
+                </div>
+
+                <h2>
+                    No birthdays yet
+                </h2>
+
+                <p>
+                    Add your friends' birthdays so you never forget
+                    an important day.
+                </p>
+
+                <a
+                    href="{{ url_for('add_birthday') }}"
+                    class="primary-button"
+                >
+                    + Add Your First Birthday
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+</body>
+
+</html>

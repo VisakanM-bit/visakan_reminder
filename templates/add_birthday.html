@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Add Birthday | Bday Reminder</title>
+
+
+    <!-- Main stylesheet -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/style.css'
+        ) }}"
+    >
+
+
+    <style>
+
+        /* =====================================================
+           PAGE
+        ===================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+            margin: 0;
+
+            min-height: 100vh;
+
+            font-family:
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            color: #172033;
+        }
+
+
+        /* =====================================================
+           TIME BACKGROUND
+        ===================================================== */
+
+        #time-background {
+            position: fixed;
+
+            inset: 0;
+
+            z-index: -2;
+
+            overflow: hidden;
+
+            transition:
+                background 0.8s ease;
+        }
+
+
+        #time-background::after {
+
+            content: "";
+
+            position: absolute;
+
+            inset: 0;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(255,255,255,.20),
+                    rgba(255,255,255,.08)
+                );
+
+            pointer-events: none;
+        }
+
+
+        /* Morning */
+
+        #time-background.morning {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffd166 0%,
+                    #ffb347 35%,
+                    #f8cdda 70%,
+                    #a1c4fd 100%
+                );
+        }
+
+
+        /* Afternoon */
+
+        #time-background.afternoon {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #56ccf2 0%,
+                    #87ceeb 40%,
+                    #f6d365 100%
+                );
+        }
+
+
+        /* Evening */
+
+        #time-background.evening {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f7971e 0%,
+                    #ffd200 30%,
+                    #f093fb 70%,
+                    #4facfe 100%
+                );
+        }
+
+
+        /* Night */
+
+        #time-background.night {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0f2027 0%,
+                    #203a43 45%,
+                    #2c5364 100%
+                );
+        }
+
+
+        /* =====================================================
+           PAGE CONTAINER
+        ===================================================== */
+
+        .birthday-page {
+
+            width: 100%;
+
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding:
+                25px
+                15px;
+        }
+
+
+        /* =====================================================
+           CARD
+        ===================================================== */
+
+        .birthday-card {
+
+            width: min(
+                100%,
+                520px
+            );
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .94
+                );
+
+            border-radius: 26px;
+
+            padding: 25px;
+
+            box-shadow:
+                0 20px 60px
+                rgba(
+                    15,
+                    23,
+                    42,
+                    .25
+                );
+
+            backdrop-filter:
+                blur(16px);
+
+            -webkit-backdrop-filter:
+                blur(16px);
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .8
+                );
+        }
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .birthday-header {
+
+            text-align: center;
+
+            margin-bottom: 22px;
+        }
+
+
+        .birthday-icon {
+
+            width: 72px;
+
+            height: 72px;
+
+            margin:
+                0 auto 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #fff7cc,
+                    #ffd166
+                );
+
+            box-shadow:
+                0 10px 25px
+                rgba(
+                    245,
+                    158,
+                    11,
+                    .20
+                );
+
+            font-size: 38px;
+        }
+
+
+        .birthday-header h1 {
+
+            margin: 0;
+
+            font-size: 25px;
+
+            font-weight: 850;
+
+            color:
+                #172033;
+        }
+
+
+        .birthday-header p {
+
+            margin:
+                7px 0 0;
+
+            color:
+                #64748b;
+
+            font-size: 13px;
+        }
+
+
+        /* =====================================================
+           FLASH MESSAGE
+        ===================================================== */
+
+        .birthday-message {
+
+            padding:
+                11px 14px;
+
+            margin-bottom: 16px;
+
+            border-radius: 12px;
+
+            background:
+                #fff7ed;
+
+            color:
+                #9a3412;
+
+            border:
+                1px solid
+                #fed7aa;
+
+            font-size: 13px;
+
+            font-weight: 600;
+        }
+
+
+        /* =====================================================
+           FORM
+        ===================================================== */
+
+        .birthday-form {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 15px;
+        }
+
+
+        .form-group {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+        }
+
+
+        .form-group label {
+
+            font-size: 12px;
+
+            font-weight: 800;
+
+            color:
+                #334155;
+
+            padding-left: 3px;
+        }
+
+
+        .required {
+
+            color:
+                #ef4444;
+        }
+
+
+        .birthday-form input,
+        .birthday-form textarea {
+
+            width: 100%;
+
+            border:
+                1px solid
+                #dbe3ec;
+
+            border-radius: 14px;
+
+            background:
+                #ffffff;
+
+            color:
+                #172033;
+
+            outline: none;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            transition:
+                .2s ease;
+        }
+
+
+        .birthday-form input {
+
+            height: 50px;
+
+            padding:
+                0 14px;
+        }
+
+
+        .birthday-form textarea {
+
+            min-height: 105px;
+
+            resize: vertical;
+
+            padding:
+                13px 14px;
+        }
+
+
+        .birthday-form input::placeholder,
+        .birthday-form textarea::placeholder {
+
+            color:
+                #94a3b8;
+        }
+
+
+        .birthday-form input:focus,
+        .birthday-form textarea:focus {
+
+            border-color:
+                #f59e0b;
+
+            box-shadow:
+                0 0 0 4px
+                rgba(
+                    245,
+                    158,
+                    11,
+                    .12
+                );
+        }
+
+
+        /* =====================================================
+           TWO COLUMN
+        ===================================================== */
+
+        .form-row {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 12px;
+        }
+
+
+        /* =====================================================
+           BUTTONS
+        ===================================================== */
+
+        .birthday-actions {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 10px;
+
+            margin-top: 5px;
+        }
+
+
+        .birthday-button {
+
+            min-height: 50px;
+
+            border: none;
+
+            border-radius: 15px;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+            text-decoration: none;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease;
+        }
+
+
+        .birthday-button:hover {
+
+            transform:
+                translateY(-2px);
+        }
+
+
+        .birthday-button.primary {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f59e0b,
+                    #f97316
+                );
+
+            color:
+                white;
+
+            box-shadow:
+                0 10px 22px
+                rgba(
+                    249,
+                    115,
+                    22,
+                    .25
+                );
+        }
+
+
+        .birthday-button.secondary {
+
+            background:
+                #f8fafc;
+
+            color:
+                #475569;
+
+            border:
+                1px solid
+                #e2e8f0;
+        }
+
+
+        /* =====================================================
+           BACK LINK
+        ===================================================== */
+
+        .back-link {
+
+            display: block;
+
+            text-align: center;
+
+            margin-top: 17px;
+
+            color:
+                #64748b;
+
+            text-decoration: none;
+
+            font-size: 12px;
+
+            font-weight: 700;
+        }
+
+
+        .back-link:hover {
+
+            color:
+                #f59e0b;
+        }
+
+
+        /* =====================================================
+           DARK THEME
+        ===================================================== */
+
+        body.dark {
+
+            color:
+                #f8fafc;
+        }
+
+
+        body.dark .birthday-card {
+
+            background:
+                rgba(
+                    30,
+                    41,
+                    59,
+                    .94
+                );
+
+            border-color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .12
+                );
+        }
+
+
+        body.dark .birthday-header h1 {
+
+            color:
+                #ffffff;
+        }
+
+
+        body.dark .birthday-header p {
+
+            color:
+                #cbd5e1;
+        }
+
+
+        body.dark .form-group label {
+
+            color:
+                #e2e8f0;
+        }
+
+
+        body.dark
+        .birthday-form input,
+        body.dark
+        .birthday-form textarea {
+
+            background:
+                #ffffff;
+
+            color:
+                #172033;
+
+            border-color:
+                #e2e8f0;
+        }
+
+
+        body.dark
+        .birthday-form input::placeholder,
+        body.dark
+        .birthday-form textarea::placeholder {
+
+            color:
+                #64748b;
+        }
+
+
+        body.dark .birthday-button.secondary {
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .10
+                );
+
+            color:
+                #ffffff;
+
+            border-color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .16
+                );
+        }
+
+
+        body.dark .back-link {
+
+            color:
+                #cbd5e1;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 600px) {
+
+            .birthday-page {
+
+                min-height:
+                    100dvh;
+
+                padding:
+                    14px;
+            }
+
+
+            .birthday-card {
+
+                padding:
+                    20px 17px;
+
+                border-radius:
+                    22px;
+            }
+
+
+            .birthday-icon {
+
+                width: 62px;
+
+                height: 62px;
+
+                font-size: 32px;
+
+                border-radius:
+                    18px;
+            }
+
+
+            .birthday-header h1 {
+
+                font-size: 22px;
+            }
+
+
+            .birthday-header p {
+
+                font-size: 12px;
+            }
+
+
+            .form-row {
+
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .birthday-actions {
+
+                grid-template-columns:
+                    1fr;
+            }
+
+
+            .birthday-form input {
+
+                height: 52px;
+            }
+
+        }
+
+
+        /* =====================================================
+           SMALL PHONES
+        ===================================================== */
+
+        @media (max-width: 380px) {
+
+            .birthday-page {
+
+                padding:
+                    10px;
+            }
+
+
+            .birthday-card {
+
+                padding:
+                    17px 14px;
+            }
+
+
+            .birthday-header {
+
+                margin-bottom:
+                    17px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     TIME BACKGROUND
+========================================================= -->
+
+<div
+    id="time-background"
+    class="morning"
+></div>
+
+
+<!-- =========================================================
+     PAGE
+========================================================= -->
+
+<main class="birthday-page">
+
+
+    <section class="birthday-card">
+
+
+        <!-- HEADER -->
+
+        <header class="birthday-header">
+
+            <div class="birthday-icon">
+                🎂
+            </div>
+
+
+            <h1>
+                Add Birthday
+            </h1>
+
+
+            <p>
+                Save an important birthday
+                so you never miss it.
+            </p>
+
+        </header>
+
+
+        <!-- FLASH MESSAGES -->
+
+        {% with messages =
+            get_flashed_messages(
+                with_categories=true
+            )
+        %}
+
+            {% if messages %}
+
+                {% for category, message in messages %}
+
+                    <div
+                        class="birthday-message"
+                    >
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+        {% endwith %}
+
+
+        <!-- FORM -->
+
+        <form
+            method="POST"
+            class="birthday-form"
+        >
+
+
+            <!-- NAME -->
+
+            <div class="form-group">
+
+                <label for="name">
+
+                    Friend's Name
+
+                    <span class="required">
+                        *
+                    </span>
+
+                </label>
+
+
+                <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    placeholder="Enter friend's name"
+                    autocomplete="name"
+                    maxlength="100"
+                    required
+                >
+
+            </div>
+
+
+            <!-- BIRTHDAY -->
+
+            <div class="form-group">
+
+                <label for="birthday">
+
+                    Birthday
+
+                    <span class="required">
+                        *
+                    </span>
+
+                </label>
+
+
+                <input
+                    id="birthday"
+                    type="date"
+                    name="birthday"
+                    required
+                >
+
+            </div>
+
+
+            <!-- RELATIONSHIP + PHONE -->
+
+            <div class="form-row">
+
+
+                <div class="form-group">
+
+                    <label for="relationship">
+                        Relationship
+                    </label>
+
+
+                    <input
+                        id="relationship"
+                        type="text"
+                        name="relationship"
+                        placeholder="Friend, Brother..."
+                        maxlength="100"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="phone">
+                        Phone
+                    </label>
+
+
+                    <input
+                        id="phone"
+                        type="tel"
+                        name="phone"
+                        placeholder="Phone number"
+                        autocomplete="tel"
+                        maxlength="30"
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <!-- NOTES -->
+
+            <div class="form-group">
+
+                <label for="notes">
+                    Notes
+                </label>
+
+
+                <textarea
+                    id="notes"
+                    name="notes"
+                    placeholder="Add a special note..."
+                    maxlength="1000"
+                ></textarea>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="birthday-actions">
+
+
+                <a
+                    href="{{ url_for('birthdays') }}"
+                    class="birthday-button secondary"
+                >
+                    ← Cancel
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="birthday-button primary"
+                >
+                    🎂 Save Birthday
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+
+        <a
+            href="{{ url_for('birthdays') }}"
+            class="back-link"
+        >
+            ← Back to Birthdays
+        </a>
+
+
+    </section>
+
+</main>
+
+
+<!-- =========================================================
+     THEME SCRIPT
+========================================================= -->
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        const background =
+            document.getElementById(
+                "time-background"
+            );
+
+
+        /* -----------------------------------------------
+           LOAD SAVED PERIOD
+        ----------------------------------------------- */
+
+        const savedPeriod =
+            localStorage.getItem(
+                "bday-reminder-period"
+            );
+
+
+        function getAutomaticPeriod() {
+
+            const hour =
+                new Date().getHours();
+
+
+            if (hour < 12) {
+
+                return "morning";
+
+            }
+
+
+            if (hour < 18) {
+
+                return "afternoon";
+
+            }
+
+
+            if (hour < 20) {
+
+                return "evening";
+
+            }
+
+
+            return "night";
+
+        }
+
+
+        function applyPeriod(
+            period
+        ) {
+
+            if (!background) {
+                return;
+            }
+
+
+            background.classList.remove(
+
+                "morning",
+
+                "afternoon",
+
+                "evening",
+
+                "night"
+
+            );
+
+
+            background.classList.add(
+                period
+            );
+
+        }
+
+
+        if (
+            !savedPeriod ||
+            savedPeriod === "auto"
+        ) {
+
+            applyPeriod(
+                getAutomaticPeriod()
+            );
+
+        }
+        else {
+
+            applyPeriod(
+                savedPeriod
+            );
+
+        }
+
+
+        /* -----------------------------------------------
+           KEEP AUTOMATIC MODE UPDATED
+        ----------------------------------------------- */
+
+        setInterval(
+            function () {
+
+                const current =
+                    localStorage.getItem(
+                        "bday-reminder-period"
+                    );
+
+
+                if (
+                    !current ||
+                    current === "auto"
+                ) {
+
+                    applyPeriod(
+                        getAutomaticPeriod()
+                    );
+
+                }
+
+            },
+            60000
+        );
+
+
+        /* -----------------------------------------------
+           LOAD DARK / LIGHT THEME
+        ----------------------------------------------- */
+
+        const savedTheme =
+            localStorage.getItem(
+                "bday-reminder-theme"
+            );
+
+
+        if (
+            savedTheme === "dark"
+        ) {
+
+            document.body.classList.add(
+                "dark"
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>

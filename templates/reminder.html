@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Reminders | Bday Reminder</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/reminder-theme.css') }}">
+
+<style>
+
+/* =========================================================
+   BASIC
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    color: #172033;
+
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   BACKGROUND
+========================================================= */
+
+.background {
+
+    position: fixed;
+    inset: 0;
+
+    z-index: -10;
+
+    overflow: hidden;
+
+    transition:
+        background 1s ease;
+}
+
+
+/* MORNING */
+
+body.period-morning .background {
+
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(255,196,87,.55),
+            transparent 28%
+        ),
+        linear-gradient(
+            135deg,
+            #fff7d6,
+            #dff5ff,
+            #bde7ff
+        );
+}
+
+
+/* AFTERNOON */
+
+body.period-afternoon .background {
+
+    background:
+        radial-gradient(
+            circle at 75% 18%,
+            rgba(255,196,76,.55),
+            transparent 25%
+        ),
+        linear-gradient(
+            135deg,
+            #b9ecff,
+            #e9faff,
+            #ffdca8
+        );
+}
+
+
+/* EVENING */
+
+body.period-evening .background {
+
+    background:
+        radial-gradient(
+            circle at 75% 25%,
+            rgba(255,143,67,.5),
+            transparent 25%
+        ),
+        linear-gradient(
+            135deg,
+            #ffd2a8,
+            #ffb6c1,
+            #7668d9
+        );
+}
+
+
+/* NIGHT */
+
+body.period-night .background {
+
+    background:
+        radial-gradient(
+            circle at 75% 20%,
+            rgba(255,255,255,.15),
+            transparent 15%
+        ),
+        radial-gradient(
+            circle at 20% 70%,
+            rgba(79,70,229,.20),
+            transparent 35%
+        ),
+        linear-gradient(
+            135deg,
+            #07111f,
+            #101b38,
+            #020617
+        );
+}
+
+
+/* =========================================================
+   SUN / MOON
+========================================================= */
+
+.sky-object {
+
+    position: absolute;
+
+    width: 90px;
+    height: 90px;
+
+    border-radius: 50%;
+
+    right: 8%;
+    top: 10%;
+
+    transition:
+        all 1s ease;
+}
+
+
+body.period-morning .sky-object {
+
+    background: #ffd54a;
+
+    box-shadow:
+        0 0 35px #ffd54a,
+        0 0 90px rgba(255,213,74,.45);
+}
+
+
+body.period-afternoon .sky-object {
+
+    background: #ffca28;
+
+    box-shadow:
+        0 0 35px #ffca28,
+        0 0 90px rgba(255,202,40,.45);
+}
+
+
+body.period-evening .sky-object {
+
+    background: #ff9d4d;
+
+    box-shadow:
+        0 0 35px #ff9d4d,
+        0 0 90px rgba(255,157,77,.45);
+}
+
+
+body.period-night .sky-object {
+
+    background: #f8fafc;
+
+    box-shadow:
+        0 0 25px rgba(255,255,255,.6),
+        0 0 70px rgba(255,255,255,.18);
+}
+
+
+/* =========================================================
+   CRICKET BALLS
+========================================================= */
+
+.cricket-ball {
+
+    position: absolute;
+
+    left: -60px;
+
+    width: 22px;
+    height: 22px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 30% 25%,
+            #ff7777,
+            #dc2626 45%,
+            #7f1d1d
+        );
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.25);
+
+    animation:
+        flyBall linear infinite;
+}
+
+
+.cricket-ball::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    top: 2px;
+
+    width: 2px;
+    height: 18px;
+
+    transform:
+        translateX(-50%)
+        rotate(25deg);
+
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            white 0 2px,
+            transparent 2px 4px
+        );
+}
+
+
+.ball-1 {
+    top: 15%;
+    animation-duration: 7s;
+}
+
+.ball-2 {
+    top: 42%;
+    width: 16px;
+    height: 16px;
+    animation-duration: 9s;
+    animation-delay: 2s;
+}
+
+.ball-3 {
+    top: 70%;
+    width: 28px;
+    height: 28px;
+    animation-duration: 8s;
+    animation-delay: 4s;
+}
+
+.ball-4 {
+    top: 55%;
+    width: 13px;
+    height: 13px;
+    animation-duration: 6s;
+    animation-delay: 1s;
+}
+
+
+@keyframes flyBall {
+
+    0% {
+        transform:
+            translate(-80px,80px)
+            rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: .75;
+    }
+
+    50% {
+        transform:
+            translate(55vw,-100px)
+            rotate(700deg);
+    }
+
+    100% {
+        transform:
+            translate(115vw,100px)
+            rotate(1400deg);
+        opacity: 0;
+    }
+}
+
+
+/* =========================================================
+   BALLOONS
+========================================================= */
+
+.balloon {
+
+    position: absolute;
+
+    bottom: -80px;
+
+    width: 22px;
+    height: 29px;
+
+    border-radius:
+        50% 50% 45% 45%;
+
+    opacity: .45;
+
+    animation:
+        floatBalloon linear infinite;
+}
+
+
+.balloon::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 27px;
+    left: 50%;
+
+    width: 1px;
+    height: 60px;
+
+    background:
+        rgba(100,116,139,.5);
+}
+
+
+.balloon-1 {
+    left: 8%;
+    background: #818cf8;
+    animation-duration: 15s;
+}
+
+.balloon-2 {
+    left: 28%;
+    background: #f472b6;
+    animation-duration: 18s;
+    animation-delay: 3s;
+}
+
+.balloon-3 {
+    left: 52%;
+    background: #34d399;
+    animation-duration: 17s;
+    animation-delay: 5s;
+}
+
+.balloon-4 {
+    right: 17%;
+    background: #60a5fa;
+    animation-duration: 16s;
+    animation-delay: 2s;
+}
+
+
+@keyframes floatBalloon {
+
+    0% {
+        transform:
+            translateY(0)
+            rotate(-5deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: .45;
+    }
+
+    50% {
+        transform:
+            translateY(-60vh)
+            translateX(25px)
+            rotate(7deg);
+    }
+
+    100% {
+        transform:
+            translateY(-120vh)
+            translateX(-20px)
+            rotate(-5deg);
+        opacity: 0;
+    }
+}
+
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+.navbar {
+
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    background:
+        rgba(255,255,255,.88);
+
+    border-bottom:
+        1px solid rgba(148,163,184,.25);
+
+    backdrop-filter:
+        blur(20px);
+
+    padding:
+        12px 20px;
+}
+
+
+.navbar-inner {
+
+    max-width: 1200px;
+
+    margin: auto;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+    gap: 15px;
+}
+
+
+.brand {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    color: #172033;
+
+    text-decoration: none;
+
+    font-weight: 800;
+}
+
+
+.brand-icon {
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        );
+
+    color: white;
+}
+
+
+.nav-tabs {
+
+    display: flex;
+
+    gap: 5px;
+}
+
+
+.nav-tab {
+
+    color: #64748b;
+
+    text-decoration: none;
+
+    padding: 9px 13px;
+
+    border-radius: 9px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+
+.nav-tab.active {
+
+    color: #4f46e5;
+
+    background:
+        rgba(79,70,229,.10);
+}
+
+
+.nav-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+.theme-toggle {
+
+    width: 40px;
+    height: 40px;
+
+    border:
+        1px solid rgba(148,163,184,.3);
+
+    border-radius: 10px;
+
+    background:
+        rgba(255,255,255,.8);
+
+    cursor: pointer;
+
+    font-size: 17px;
+}
+
+
+.logout {
+
+    text-decoration: none;
+
+    color: #dc2626;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    padding: 9px 12px;
+
+    border-radius: 9px;
+
+    background:
+        rgba(220,38,38,.08);
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.main {
+
+    width:
+        min(
+            calc(100% - 30px),
+            1100px
+        );
+
+    margin: auto;
+
+    padding:
+        30px 0 70px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.page-header {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+}
+
+
+.page-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+}
+
+
+.page-icon {
+
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    background:
+        rgba(255,255,255,.92);
+
+    box-shadow:
+        0 10px 25px rgba(15,23,42,.10);
+
+    font-size: 25px;
+}
+
+
+.page-title h1 {
+
+    margin: 0;
+
+    font-size:
+        clamp(27px,5vw,40px);
+
+    color: #172033;
+}
+
+
+.page-title p {
+
+    margin-top: 4px;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   ADD BUTTON
+========================================================= */
+
+.add-button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 12px 18px;
+
+    border-radius: 12px;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        );
+
+    text-decoration: none;
+
+    font-weight: 750;
+
+    font-size: 14px;
+
+    box-shadow:
+        0 10px 25px
+        rgba(79,70,229,.25);
+}
+
+
+/* =========================================================
+   PERIOD SWITCHER
+========================================================= */
+
+.period-selector {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    margin-bottom: 20px;
+}
+
+
+.period-button {
+
+    border:
+        1px solid rgba(148,163,184,.3);
+
+    background:
+        rgba(255,255,255,.90);
+
+    color: #334155;
+
+    padding:
+        9px 13px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-size: 12px;
+
+    font-weight: 750;
+
+    transition:
+        .2s ease;
+}
+
+
+.period-button:hover {
+
+    transform:
+        translateY(-1px);
+}
+
+
+.period-button.active {
+
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        );
+
+    color: white;
+
+    border-color:
+        transparent;
+}
+
+
+/* =========================================================
+   CALENDAR
+========================================================= */
+
+.calendar-card {
+
+    background:
+        #ffffff;
+
+    border:
+        1px solid
+        rgba(148,163,184,.25);
+
+    border-radius:
+        22px;
+
+    box-shadow:
+        0 20px 60px
+        rgba(15,23,42,.13);
+
+    overflow:
+        hidden;
+
+    margin-bottom:
+        24px;
+}
+
+
+.calendar-header {
+
+    padding: 20px;
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    color: #172033;
+
+    border-bottom:
+        1px solid #e5e7eb;
+}
+
+
+.month-title {
+
+    font-size: 20px;
+
+    font-weight: 800;
+}
+
+
+.calendar-buttons {
+
+    display: flex;
+
+    gap: 7px;
+}
+
+
+.calendar-button {
+
+    width: 38px;
+    height: 38px;
+
+    border:
+        1px solid #e2e8f0;
+
+    background:
+        #f8fafc;
+
+    border-radius: 9px;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+    color: #334155;
+}
+
+
+.weekdays {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(7,1fr);
+
+    border-bottom:
+        1px solid #e5e7eb;
+}
+
+
+.weekday {
+
+    text-align: center;
+
+    padding: 11px 3px;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
+
+
+.calendar-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(7,1fr);
+}
+
+
+.calendar-day {
+
+    min-height: 72px;
+
+    padding: 8px;
+
+    border-right:
+        1px solid #edf0f4;
+
+    border-bottom:
+        1px solid #edf0f4;
+
+    cursor: pointer;
+
+    position: relative;
+
+    color: #172033;
+
+    transition:
+        background .2s ease;
+}
+
+
+.calendar-day:hover {
+
+    background: #f5f7ff;
+}
+
+
+.calendar-day.empty {
+
+    background: #fafafa;
+
+    cursor: default;
+}
+
+
+.calendar-day.today {
+
+    background: #eef2ff;
+}
+
+
+.calendar-day.selected {
+
+    background: #e0e7ff;
+
+    box-shadow:
+        inset 0 0 0 2px #6366f1;
+}
+
+
+.day-number {
+
+    width: 28px;
+    height: 28px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    font-size: 12px;
+
+    font-weight: 750;
+}
+
+
+.calendar-day.today .day-number {
+
+    color: white;
+
+    background: #4f46e5;
+}
+
+
+.reminder-dot {
+
+    position: absolute;
+
+    bottom: 7px;
+    left: 9px;
+
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #f59e0b;
+}
+
+
+.reminder-count {
+
+    position: absolute;
+
+    right: 6px;
+    bottom: 5px;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    color: #4f46e5;
+}
+
+
+/* =========================================================
+   SELECTED DATE
+========================================================= */
+
+.selected-date {
+
+    background:
+        rgba(255,255,255,.88);
+
+    border:
+        1px solid
+        rgba(148,163,184,.25);
+
+    border-radius:
+        18px;
+
+    padding: 20px;
+
+    margin-bottom: 18px;
+
+    backdrop-filter:
+        blur(20px);
+}
+
+
+.selected-date-top {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+}
+
+
+.selected-date h2 {
+
+    margin: 0;
+
+    color: #172033;
+
+    font-size: 20px;
+}
+
+
+.selected-date small {
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   REMINDER LIST
+========================================================= */
+
+.reminders-list {
+
+    display: grid;
+
+    gap: 13px;
+}
+
+
+.reminder-card {
+
+    background:
+        rgba(255,255,255,.94);
+
+    border:
+        1px solid
+        rgba(148,163,184,.25);
+
+    border-left:
+        4px solid #4f46e5;
+
+    border-radius:
+        15px;
+
+    padding: 17px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+    gap: 15px;
+
+    box-shadow:
+        0 8px 25px
+        rgba(15,23,42,.07);
+
+    backdrop-filter:
+        blur(18px);
+}
+
+
+.reminder-main {
+
+    min-width: 0;
+}
+
+
+.reminder-title {
+
+    color: #172033;
+
+    font-size: 16px;
+
+    font-weight: 800;
+
+    margin-bottom: 6px;
+}
+
+
+.reminder-description {
+
+    color: #64748b;
+
+    font-size: 13px;
+
+    margin-bottom: 9px;
+
+    word-break: break-word;
+}
+
+
+.reminder-meta {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+}
+
+
+.meta {
+
+    padding: 5px 8px;
+
+    border-radius: 7px;
+
+    background:
+        rgba(79,70,229,.09);
+
+    color: #4f46e5;
+
+    font-size: 11px;
+
+    font-weight: 750;
+}
+
+
+.reminder-actions {
+
+    display: flex;
+
+    gap: 7px;
+
+    flex-shrink: 0;
+}
+
+
+.action-button {
+
+    width: 38px;
+    height: 38px;
+
+    border:
+        1px solid #e2e8f0;
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #172033;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-decoration: none;
+}
+
+
+.action-delete {
+
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty {
+
+    padding: 38px 20px;
+
+    text-align: center;
+
+    background:
+        rgba(255,255,255,.90);
+
+    border:
+        1px solid
+        rgba(148,163,184,.25);
+
+    border-radius: 17px;
+}
+
+
+.empty-icon {
+
+    font-size: 35px;
+
+    margin-bottom: 8px;
+}
+
+
+.empty h3 {
+
+    color: #172033;
+
+    margin-bottom: 5px;
+}
+
+
+.empty p {
+
+    color: #64748b;
+
+    font-size: 13px;
+
+    margin-bottom: 15px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width:800px) {
+
+    .navbar-inner {
+        flex-wrap: wrap;
+    }
+
+    .nav-tabs {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .page-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .add-button {
+        width: 100%;
+    }
+
+    .calendar-day {
+        min-height: 60px;
+        padding: 5px;
+    }
+
+}
+
+
+@media (max-width:600px) {
+
+    .navbar {
+        padding: 10px 12px;
+    }
+
+    .main {
+        width: calc(100% - 20px);
+        padding-top: 20px;
+    }
+
+    .page-title h1 {
+        font-size: 28px;
+    }
+
+    .period-selector {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    .period-button {
+        white-space: nowrap;
+    }
+
+    .calendar-card {
+        border-radius: 17px;
+    }
+
+    .calendar-header {
+        padding: 15px;
+    }
+
+    .weekday {
+        font-size: 9px;
+    }
+
+    .calendar-day {
+        min-height: 53px;
+        padding: 3px;
+    }
+
+    .day-number {
+        width: 25px;
+        height: 25px;
+        font-size: 11px;
+    }
+
+    .reminder-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .reminder-actions {
+        width: 100%;
+    }
+
+    .action-button {
+        flex: 1;
+    }
+
+    .logout {
+        display: none;
+    }
+
+    .sky-object {
+        width: 65px;
+        height: 65px;
+        right: 7%;
+        top: 8%;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     BACKGROUND
+===================================================== -->
+
+<div class="background">
+
+    <div class="sky-object"></div>
+
+    <div class="cricket-ball ball-1"></div>
+    <div class="cricket-ball ball-2"></div>
+    <div class="cricket-ball ball-3"></div>
+    <div class="cricket-ball ball-4"></div>
+
+    <div class="balloon balloon-1"></div>
+    <div class="balloon balloon-2"></div>
+    <div class="balloon balloon-3"></div>
+    <div class="balloon balloon-4"></div>
+
+</div>
+
+
+<!-- =====================================================
+     NAVBAR
+===================================================== -->
+
+<nav class="navbar">
+
+<div class="navbar-inner">
+
+
+<a href="{{ url_for('home') }}"
+   class="brand">
+
+    <span class="brand-icon">
+        🎂
+    </span>
+
+    <span>
+        Bday Reminder
+    </span>
+
+</a>
+
+
+<div class="nav-tabs">
+
+<a href="{{ url_for('home') }}"
+   class="nav-tab">
+    🏠 Dashboard
+</a>
+
+<a href="{{ url_for('birthdays') }}"
+   class="nav-tab">
+    🎂 Birthdays
+</a>
+
+<a href="{{ url_for('reminders') }}"
+   class="nav-tab active">
+    ⏰ Reminders
+</a>
+
+</div>
+
+
+<div class="nav-actions">
+
+<button
+    id="theme-toggle"
+    class="theme-toggle"
+    type="button">
+    🌙
+</button>
+
+<a href="{{ url_for('logout') }}"
+   class="logout">
+    Logout
+</a>
+
+</div>
+
+</div>
+
+</nav>
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main class="main">
+
+
+<div class="page-header">
+
+
+<div class="page-title">
+
+<div class="page-icon">
+    ⏰
+</div>
+
+<div>
+
+<h1>
+    Reminders
+</h1>
+
+<p>
+    Select a date to view your reminders.
+</p>
+
+</div>
+
+</div>
+
+
+<a
+    href="{{ url_for('add_reminder') }}"
+    class="add-button">
+    ＋ Add Reminder
+</a>
+
+
+</div>
+
+
+<!-- =====================================================
+     BACKGROUND SWITCHER
+===================================================== -->
+
+<div class="period-selector">
+
+<button
+    type="button"
+    class="period-button"
+    data-period="auto">
+    🔄 Auto
+</button>
+
+<button
+    type="button"
+    class="period-button"
+    data-period="morning">
+    🌅 Morning
+</button>
+
+<button
+    type="button"
+    class="period-button"
+    data-period="afternoon">
+    ☀️ Afternoon
+</button>
+
+<button
+    type="button"
+    class="period-button"
+    data-period="evening">
+    🌇 Evening
+</button>
+
+<button
+    type="button"
+    class="period-button"
+    data-period="night">
+    🌙 Night
+</button>
+
+</div>
+
+
+<!-- =====================================================
+     CALENDAR
+===================================================== -->
+
+<section class="calendar-card">
+
+
+<div class="calendar-header">
+
+<button
+    type="button"
+    id="previous-month"
+    class="calendar-button">
+    ‹
+</button>
+
+
+<div
+    id="month-title"
+    class="month-title">
+    Month
+</div>
+
+
+<button
+    type="button"
+    id="next-month"
+    class="calendar-button">
+    ›
+</button>
+
+</div>
+
+
+<div class="weekdays">
+
+<div class="weekday">SUN</div>
+<div class="weekday">MON</div>
+<div class="weekday">TUE</div>
+<div class="weekday">WED</div>
+<div class="weekday">THU</div>
+<div class="weekday">FRI</div>
+<div class="weekday">SAT</div>
+
+</div>
+
+
+<div
+    id="calendar-grid"
+    class="calendar-grid">
+</div>
+
+
+</section>
+
+
+<!-- =====================================================
+     SELECTED DATE
+===================================================== -->
+
+<section class="selected-date">
+
+<div class="selected-date-top">
+
+<div>
+
+<h2 id="selected-date-title">
+    Today's Reminders
+</h2>
+
+<small id="selected-date-subtitle">
+    Loading...
+</small>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =====================================================
+     REMINDER LIST
+===================================================== -->
+
+<section
+    id="reminders-list"
+    class="reminders-list">
+</section>
+
+
+</main>
+
+
+<!-- =====================================================
+     THEME ENGINE
+===================================================== -->
+
+<script src="{{ url_for(
+    'static',
+    filename='js/reminder-theme.js'
+) }}"></script>
+
+
+<!-- =====================================================
+     CALENDAR ENGINE
+===================================================== -->
+
+<script>
+
+const REMINDERS =
+    {{ reminders_json | tojson }};
+
+
+const today =
+    new Date();
+
+
+let currentMonth =
+    today.getMonth();
+
+
+let currentYear =
+    today.getFullYear();
+
+
+let selectedDate =
+    formatDate(today);
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const calendarGrid =
+    document.getElementById(
+        "calendar-grid"
+    );
+
+const monthTitle =
+    document.getElementById(
+        "month-title"
+    );
+
+const selectedTitle =
+    document.getElementById(
+        "selected-date-title"
+    );
+
+const selectedSubtitle =
+    document.getElementById(
+        "selected-date-subtitle"
+    );
+
+const remindersList =
+    document.getElementById(
+        "reminders-list"
+    );
+
+
+/* =====================================================
+   DATE
+===================================================== */
+
+function formatDate(date) {
+
+    return (
+        date.getFullYear()
+        + "-"
+        + String(
+            date.getMonth() + 1
+        ).padStart(2,"0")
+        + "-"
+        + String(
+            date.getDate()
+        ).padStart(2,"0")
+    );
+
+}
+
+
+function readableDate(value) {
+
+    const date =
+        new Date(
+            value + "T00:00:00"
+        );
+
+    return date.toLocaleDateString(
+        "en-IN",
+        {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+function readableTime(value) {
+
+    if (!value) {
+        return "";
+    }
+
+    const parts =
+        value.split(":");
+
+    let hour =
+        parseInt(
+            parts[0],
+            10
+        );
+
+    const minute =
+        parts[1] || "00";
+
+    const period =
+        hour >= 12
+            ? "PM"
+            : "AM";
+
+    hour =
+        hour % 12 || 12;
+
+    return (
+        hour +
+        ":" +
+        minute +
+        " " +
+        period
+    );
+
+}
+
+
+/* =====================================================
+   FILTER
+===================================================== */
+
+function remindersForDate(
+    date
+) {
+
+    return REMINDERS.filter(
+        reminder =>
+            reminder.reminder_date ===
+            date
+    );
+
+}
+
+
+/* =====================================================
+   CALENDAR
+===================================================== */
+
+function renderCalendar() {
+
+    calendarGrid.innerHTML = "";
+
+    const firstDay =
+        new Date(
+            currentYear,
+            currentMonth,
+            1
+        );
+
+    const lastDay =
+        new Date(
+            currentYear,
+            currentMonth + 1,
+            0
+        );
+
+
+    const start =
+        firstDay.getDay();
+
+
+    const total =
+        lastDay.getDate();
+
+
+    monthTitle.textContent =
+        firstDay.toLocaleDateString(
+            "en-IN",
+            {
+                month: "long",
+                year: "numeric"
+            }
+        );
+
+
+    for (
+        let i = 0;
+        i < start;
+        i++
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "calendar-day empty";
+
+        calendarGrid.appendChild(
+            empty
+        );
+
+    }
+
+
+    for (
+        let day = 1;
+        day <= total;
+        day++
+    ) {
+
+        const date =
+            new Date(
+                currentYear,
+                currentMonth,
+                day
+            );
+
+
+        const dateString =
+            formatDate(date);
+
+
+        const cell =
+            document.createElement(
+                "div"
+            );
+
+        cell.className =
+            "calendar-day";
+
+
+        if (
+            dateString ===
+            formatDate(today)
+        ) {
+
+            cell.classList.add(
+                "today"
+            );
+
+        }
+
+
+        if (
+            dateString ===
+            selectedDate
+        ) {
+
+            cell.classList.add(
+                "selected"
+            );
+
+        }
+
+
+        const number =
+            document.createElement(
+                "div"
+            );
+
+        number.className =
+            "day-number";
+
+        number.textContent =
+            day;
+
+
+        cell.appendChild(
+            number
+        );
+
+
+        const items =
+            remindersForDate(
+                dateString
+            );
+
+
+        if (
+            items.length
+        ) {
+
+            const dot =
+                document.createElement(
+                    "div"
+                );
+
+            dot.className =
+                "reminder-dot";
+
+            cell.appendChild(
+                dot
+            );
+
+
+            if (
+                items.length > 1
+            ) {
+
+                const count =
+                    document.createElement(
+                        "div"
+                    );
+
+                count.className =
+                    "reminder-count";
+
+                count.textContent =
+                    items.length;
+
+                cell.appendChild(
+                    count
+                );
+
+            }
+
+        }
+
+
+        cell.addEventListener(
+            "click",
+            function() {
+
+                selectedDate =
+                    dateString;
+
+                renderCalendar();
+
+                renderReminders();
+
+            }
+        );
+
+
+        calendarGrid.appendChild(
+            cell
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   REMINDER LIST
+===================================================== */
+
+function renderReminders() {
+
+    remindersList.innerHTML = "";
+
+
+    const items =
+        remindersForDate(
+            selectedDate
+        );
+
+
+    selectedTitle.textContent =
+        selectedDate ===
+        formatDate(today)
+
+            ? "Today's Reminders"
+            : "Reminders";
+
+
+    selectedSubtitle.textContent =
+        readableDate(
+            selectedDate
+        );
+
+
+    if (
+        items.length === 0
+    ) {
+
+        remindersList.innerHTML = `
+
+        <div class="empty">
+
+            <div class="empty-icon">
+                📭
+            </div>
+
+            <h3>
+                No reminders
+            </h3>
+
+            <p>
+                You don't have any reminders
+                scheduled for this date.
+            </p>
+
+            <a
+                href="{{ url_for('add_reminder') }}"
+                class="add-button">
+                ＋ Add Reminder
+            </a>
+
+        </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    items
+        .sort(
+            (a,b) =>
+                (a.reminder_time || "")
+                .localeCompare(
+                    b.reminder_time || ""
+                )
+        )
+        .forEach(
+            function(reminder) {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+                card.className =
+                    "reminder-card";
+
+
+                const main =
+                    document.createElement(
+                        "div"
+                    );
+
+                main.className =
+                    "reminder-main";
+
+
+                const title =
+                    document.createElement(
+                        "div"
+                    );
+
+                title.className =
+                    "reminder-title";
+
+                title.textContent =
+                    reminder.title ||
+                    "Untitled Reminder";
+
+
+                const description =
+                    document.createElement(
+                        "div"
+                    );
+
+                description.className =
+                    "reminder-description";
+
+                description.textContent =
+                    reminder.description ||
+                    "No description";
+
+
+                const meta =
+                    document.createElement(
+                        "div"
+                    );
+
+                meta.className =
+                    "reminder-meta";
+
+
+                const time =
+                    document.createElement(
+                        "span"
+                    );
+
+                time.className =
+                    "meta";
+
+                time.textContent =
+                    "🕐 " +
+                    readableTime(
+                        reminder.reminder_time
+                    );
+
+
+                meta.appendChild(
+                    time
+                );
+
+
+                if (
+                    reminder.place
+                ) {
+
+                    const place =
+                        document.createElement(
+                            "span"
+                        );
+
+                    place.className =
+                        "meta";
+
+                    place.textContent =
+                        "📍 " +
+                        reminder.place;
+
+                    meta.appendChild(
+                        place
+                    );
+
+                }
+
+
+                main.appendChild(
+                    title
+                );
+
+                main.appendChild(
+                    description
+                );
+
+                main.appendChild(
+                    meta
+                );
+
+
+                const actions =
+                    document.createElement(
+                        "div"
+                    );
+
+                actions.className =
+                    "reminder-actions";
+
+
+                const edit =
+                    document.createElement(
+                        "a"
+                    );
+
+                edit.className =
+                    "action-button";
+
+                edit.href =
+                    "/reminders/edit/" +
+                    reminder.id;
+
+                edit.textContent =
+                    "✏️";
+
+
+                const deleteForm =
+                    document.createElement(
+                        "form"
+                    );
+
+                deleteForm.method =
+                    "POST";
+
+                deleteForm.action =
+                    "/reminders/delete/" +
+                    reminder.id;
+
+
+                const deleteButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                deleteButton.type =
+                    "submit";
+
+                deleteButton.className =
+                    "action-button action-delete";
+
+                deleteButton.textContent =
+                    "🗑️";
+
+
+                deleteForm.appendChild(
+                    deleteButton
+                );
+
+
+                actions.appendChild(
+                    edit
+                );
+
+                actions.appendChild(
+                    deleteForm
+                );
+
+
+                card.appendChild(
+                    main
+                );
+
+                card.appendChild(
+                    actions
+                );
+
+
+                remindersList.appendChild(
+                    card
+                );
+
+            }
+        );
+
+}
+
+
+/* =====================================================
+   MONTH NAVIGATION
+===================================================== */
+
+document
+    .getElementById(
+        "previous-month"
+    )
+    .addEventListener(
+        "click",
+        function() {
+
+            currentMonth--;
+
+            if (
+                currentMonth < 0
+            ) {
+
+                currentMonth = 11;
+                currentYear--;
+
+            }
+
+            renderCalendar();
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "next-month"
+    )
+    .addEventListener(
+        "click",
+        function() {
+
+            currentMonth++;
+
+            if (
+                currentMonth > 11
+            ) {
+
+                currentMonth = 0;
+                currentYear++;
+
+            }
+
+            renderCalendar();
+
+        }
+    );
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+
+renderCalendar();
+
+renderReminders();
+
+</script>
+
+
+</body>
+
+</html>

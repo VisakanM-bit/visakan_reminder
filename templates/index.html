@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Bday Reminder</title>
+    <title>Reminder</title>
 
     <link
         rel="stylesheet"
@@ -14,19 +15,101 @@
 
 <body>
 
-    <main class="container">
+    <div class="app">
 
-        <h1>🎂 Bday Reminder</h1>
+        <!-- Sidebar -->
+        <aside class="sidebar">
 
-        <p>Your personal reminder assistant.</p>
+            <h2>🔔 Reminder</h2>
 
-        <button id="testButton">
-            Test Application
-        </button>
+            <nav>
+                <button>🏠 Dashboard</button>
+                <button>💬 Chat</button>
+                <button>🎂 Birthdays</button>
+                <button>⏰ Reminders</button>
+                <button>📅 Calendar</button>
+                <button>📜 History</button>
+            </nav>
 
-    </main>
+        </aside>
+
+
+        <!-- Main Content -->
+        <main class="main">
+
+            <header class="topbar">
+
+                <div>
+                    <h1>Good evening 👋</h1>
+                    <p>What should I remember for you?</p>
+                </div>
+
+                <div class="profile">
+                    👤
+                </div>
+
+            </header>
+
+
+            <!-- Chat -->
+            <section class="chat-container">
+
+                <div id="chatBox" class="chat-box">
+
+                    <div class="message assistant">
+                        <strong>Reminder Assistant</strong>
+                        <p>
+                            Hi! Tell me anything you want me to remember.
+                        </p>
+                    </div>
+
+                    <div class="message assistant">
+                        <p>
+                            For example:
+                            <br>
+                            "Remind me to call Arun tomorrow at 7 PM."
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- Input -->
+                <div class="chat-input">
+
+                    <button
+                        id="voiceButton"
+                        class="icon-button"
+                        title="Voice input"
+                    >
+                        🎤
+                    </button>
+
+                    <input
+                        id="messageInput"
+                        type="text"
+                        placeholder="Type a reminder..."
+                        autocomplete="off"
+                    >
+
+                    <button
+                        id="sendButton"
+                        class="send-button"
+                    >
+                        Send
+                    </button>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
 </body>
+
 </html>

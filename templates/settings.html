@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Settings | Bday Reminder</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/settings.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     TIME BACKGROUND
+========================================================= -->
+
+<div
+    id="time-background"
+    class="morning"
+>
+
+    <div class="sun"></div>
+
+    <div class="moon"></div>
+
+</div>
+
+
+
+<!-- =========================================================
+     PAGE
+========================================================= -->
+
+<div class="settings-page">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="settings-header">
+
+        <button
+            class="back-button"
+            onclick="window.location.href='{{ url_for('home') }}'"
+        >
+            ←
+        </button>
+
+
+        <div class="settings-heading">
+
+            <div class="settings-heading-icon">
+                ⚙️
+            </div>
+
+            <div>
+
+                <h1>
+                    Settings
+                </h1>
+
+                <p>
+                    Manage your Bday Reminder experience
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <button
+            id="theme-toggle"
+            class="theme-button"
+            type="button"
+        >
+            🌙
+        </button>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         SETTINGS CONTENT
+    ====================================================== -->
+
+    <main class="settings-container">
+
+
+        <!-- =================================================
+             PROFILE CARD
+        ================================================== -->
+
+        <section class="profile-card">
+
+            <div class="profile-avatar">
+                {{ current_user.name[:1]|upper }}
+            </div>
+
+
+            <div class="profile-info">
+
+                <h2>
+                    {{ current_user.name }}
+                </h2>
+
+                <p>
+                    {{ current_user.email }}
+                </p>
+
+                <span>
+                    Personal Reminder Account
+                </span>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             NOTIFICATIONS
+        ================================================== -->
+
+        <section class="settings-section">
+
+            <button
+                class="settings-section-header"
+                type="button"
+            >
+
+                <div class="section-left">
+
+                    <div class="section-icon notification-icon">
+                        🔔
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Notifications
+                        </h2>
+
+                        <p>
+                            Control reminder and birthday alerts
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <span class="section-arrow">
+                    ›
+                </span>
+
+            </button>
+
+
+            <div class="settings-options">
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Reminder Notifications
+                        </strong>
+
+                        <span>
+                            Notify you when a reminder is due
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="reminder-notifications"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Birthday Notifications
+                        </strong>
+
+                        <span>
+                            Receive upcoming birthday alerts
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="birthday-notifications"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Browser Notifications
+                        </strong>
+
+                        <span>
+                            Show notifications outside the page
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="browser-notifications"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             BIRTHDAY ALERTS
+        ================================================== -->
+
+        <section class="settings-section">
+
+            <button
+                class="settings-section-header"
+                type="button"
+            >
+
+                <div class="section-left">
+
+                    <div class="section-icon birthday-icon">
+                        🎂
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Birthday Alerts
+                        </h2>
+
+                        <p>
+                            Choose when birthday reminders appear
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <span class="section-arrow">
+                    ›
+                </span>
+
+            </button>
+
+
+            <div class="settings-options">
+
+
+                <div class="setting-row column-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Birthday Alert Period
+                        </strong>
+
+                        <span>
+                            Show alerts before the birthday
+                        </span>
+
+                    </div>
+
+
+                    <select
+                        id="birthday-alert-days"
+                        class="settings-select"
+                    >
+
+                        <option value="1">
+                            1 day before
+                        </option>
+
+                        <option value="2">
+                            2 days before
+                        </option>
+
+                        <option value="3">
+                            3 days before
+                        </option>
+
+                        <option
+                            value="5"
+                            selected
+                        >
+                            5 days before
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Birthday Day Alert
+                        </strong>
+
+                        <span>
+                            Notify again on the actual birthday
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="birthday-day-alert"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             REMINDER PREFERENCES
+        ================================================== -->
+
+        <section class="settings-section">
+
+            <button
+                class="settings-section-header"
+                type="button"
+            >
+
+                <div class="section-left">
+
+                    <div class="section-icon reminder-icon">
+                        ⏰
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Reminder Preferences
+                        </h2>
+
+                        <p>
+                            Customize your reminder behaviour
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <span class="section-arrow">
+                    ›
+                </span>
+
+            </button>
+
+
+            <div class="settings-options">
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Show Completed Reminders
+                        </strong>
+
+                        <span>
+                            Keep completed reminders visible
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="show-completed"
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Automatically Complete Due Reminders
+                        </strong>
+
+                        <span>
+                            Mark reminders complete after confirmation
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="auto-complete"
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             APPEARANCE
+        ================================================== -->
+
+        <section class="settings-section">
+
+            <button
+                class="settings-section-header"
+                type="button"
+            >
+
+                <div class="section-left">
+
+                    <div class="section-icon appearance-icon">
+                        🎨
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Appearance
+                        </h2>
+
+                        <p>
+                            Customize the look of your application
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <span class="section-arrow">
+                    ›
+                </span>
+
+            </button>
+
+
+            <div class="settings-options">
+
+
+                <div class="setting-row column-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Theme
+                        </strong>
+
+                        <span>
+                            Choose your preferred interface theme
+                        </span>
+
+                    </div>
+
+
+                    <select
+                        id="appearance-theme"
+                        class="settings-select"
+                    >
+
+                        <option value="light">
+                            ☀️ Light
+                        </option>
+
+                        <option value="dark">
+                            🌙 Dark
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Automatic Time Background
+                        </strong>
+
+                        <span>
+                            Change the background according to time
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="auto-background"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             ASSISTANT
+        ================================================== -->
+
+        <section class="settings-section">
+
+            <button
+                class="settings-section-header"
+                type="button"
+            >
+
+                <div class="section-left">
+
+                    <div class="section-icon assistant-icon">
+                        🤖
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Reminder Assistant
+                        </h2>
+
+                        <p>
+                            Configure your chat assistant
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <span class="section-arrow">
+                    ›
+                </span>
+
+            </button>
+
+
+            <div class="settings-options">
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Assistant Enabled
+                        </strong>
+
+                        <span>
+                            Allow the assistant to create reminders
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="assistant-enabled"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+
+                <div class="setting-row">
+
+                    <div class="setting-text">
+
+                        <strong>
+                            Confirmation Messages
+                        </strong>
+
+                        <span>
+                            Show confirmation after adding an event
+                        </span>
+
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input
+                            type="checkbox"
+                            id="assistant-confirmation"
+                            checked
+                        >
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             DATA & HISTORY
+        ================================================== -->
+
+        <section class="settings-section">
+
+            <button
+                class="settings-section-header"
+                type="button"
+            >
+
+                <div class="section-left">
+
+                    <div class="section-icon data-icon">
+                        🗂️
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Data & History
+                        </h2>
+
+                        <p>
+                            Manage your reminder information
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <span class="section-arrow">
+                    ›
+                </span>
+
+            </button>
+
+
+            <div class="settings-options">
+
+
+                <button
+                    class="action-button"
+                    type="button"
+                    onclick="window.location.href='{{ url_for('history') }}'"
+                >
+
+                    <span>
+                        📜
+                        View Reminder History
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="action-button danger"
+                    id="clear-completed"
+                    type="button"
+                >
+
+                    <span>
+                        🗑️
+                        Clear Completed Reminders
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             ACCOUNT
+        ================================================== -->
+
+        <section class="settings-section">
+
+            <button
+                class="settings-section-header"
+                type="button"
+            >
+
+                <div class="section-left">
+
+                    <div class="section-icon account-icon">
+                        👤
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Account
+                        </h2>
+
+                        <p>
+                            Manage your account
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <span class="section-arrow">
+                    ›
+                </span>
+
+            </button>
+
+
+            <div class="settings-options">
+
+
+                <div class="account-details">
+
+                    <div>
+
+                        <span>
+                            Name
+                        </span>
+
+                        <strong>
+                            {{ current_user.name }}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Email
+                        </span>
+
+                        <strong>
+                            {{ current_user.email }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="logout-button"
+                    type="button"
+                    onclick="window.location.href='{{ url_for('logout') }}'"
+                >
+
+                    🚪
+                    Logout
+
+                </button>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <div class="settings-footer">
+
+            <span>
+                Bday Reminder
+            </span>
+
+            <span>
+                Your personal reminder assistant
+            </span>
+
+        </div>
+
+
+    </main>
+
+</div>
+
+
+
+<script
+    src="{{ url_for('static', filename='js/settings.js') }}"
+    defer
+></script>
+
+
+</body>
+
+</html>
