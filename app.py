@@ -501,8 +501,25 @@ def register():
                 url_for("register")
             )
 
+
         # ----------------------------------------------------
-        # LOGIN
+        # LOGIN NEW USER
+        # ----------------------------------------------------
+
+        login_user(user)
+
+        flash(
+            "Account created successfully!",
+            "success"
+        )
+
+        return redirect(
+            url_for("home")
+        )
+
+
+# ============================================================
+# LOGIN
 # ============================================================
 
 @app.route(
