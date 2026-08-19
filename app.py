@@ -29,6 +29,8 @@
 # - Chat → Birthday integration
 # - Alarm reset when reminder is edited
 # - Alarm cleanup when reminder is deleted/completed
+# - Render database configuration
+# - Local SQLite fallback
 # ============================================================
 
 
@@ -36,14 +38,15 @@
 # IMPORTS
 # ============================================================
 
+import os
+import re
+
 from datetime import (
     datetime,
     date,
     timedelta,
     time
 )
-
-import re
 
 from zoneinfo import ZoneInfo
 
@@ -102,8 +105,107 @@ from notification_service import (
 
 app = Flask(__name__)
 
-app.config.from_object(
-    Config
+app.config.from_object(Config)
+
+
+# ============================================================
+# DATABASE CONFIGURATION
+#
+# Priority:
+#
+# 1. Render DATABASE_URL
+# 2. DATABASE_URL from Config
+# 3. Local SQLite fallback
+#
+# This prevents:
+#
+# Error: Either 'SQLALCHEMY_DATABASE_URI'
+# or 'SQLALCHEMY_BINDS' must be set.
+# ============================================================
+
+database_url = (
+    os.environ.get("DATABASE_URL")
+    or app.config.get("SQLALCHEMY_DATABASE_URI")
+)
+
+
+# ------------------------------------------------------------
+# Render / PostgreSQL compatibility
+#
+# Some PostgreSQL providers return:
+#
+# postgres://...
+#
+# SQLAlchemy expects:
+#
+# postgresql://...
+# ------------------------------------------------------------
+
+if database_url:
+
+    if database_url.startswith(
+        "postgres://"
+    ):
+
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql://",
+            1
+        )
+
+
+# ------------------------------------------------------------
+# Local fallback
+#
+# This keeps the application working normally on your PC
+# even when DATABASE_URL is not configured.
+# ------------------------------------------------------------
+
+if not database_url:
+
+    database_path = os.path.join(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        ),
+        "bday_reminder.db"
+    )
+
+    database_url = (
+        "sqlite:///"
+        +
+        database_path
+    )
+
+
+app.config[
+    "SQLALCHEMY_DATABASE_URI"
+] = database_url
+
+
+app.config[
+    "SQLALCHEMY_TRACK_MODIFICATIONS"
+] = False
+
+
+# ------------------------------------------------------------
+# SQLAlchemy connection health
+# ------------------------------------------------------------
+
+app.config[
+    "SQLALCHEMY_ENGINE_OPTIONS"
+] = {
+
+    "pool_pre_ping": True
+
+}
+
+
+# ============================================================
+# BCRYPT
+# ============================================================
+
+bcrypt = Bcrypt(
+    app
 )
 
 
@@ -112,15 +214,6 @@ app.config.from_object(
 # ============================================================
 
 db.init_app(
-    app
-)
-
-
-# ============================================================
-# BCRYPT
-# ============================================================
-
-bcrypt = Bcrypt(
     app
 )
 
@@ -177,7 +270,6 @@ def india_today():
 login_manager = LoginManager(
     app
 )
-
 
 login_manager.login_view = "login"
 
@@ -910,15 +1002,6 @@ def edit_birthday(
         )
 
 
-        # ----------------------------------------------------
-        # IMPORTANT
-        #
-        # If birthday date/name changes,
-        # remove the old occurrence alarm.
-        # The new occurrence will be created automatically
-        # by the notification engine.
-        # ----------------------------------------------------
-
         reset_alarms_for_birthday(
 
             birthday.id,
@@ -981,8 +1064,6 @@ def delete_birthday(
     )
 
 
-    # Remove persistent alarm state first.
-
     reset_alarms_for_birthday(
 
         birthday.id,
@@ -1041,19 +1122,6 @@ def reminders():
     )
 
 
-    # --------------------------------------------------------
-    # JSON SAFE DATA
-    #
-    # IMPORTANT:
-    # The existing reminder.html expects:
-    #
-    # reminder_date
-    # reminder_time
-    #
-    # Keep both the original names and the simple names
-    # for compatibility.
-    # --------------------------------------------------------
-
     reminders_json = []
 
 
@@ -1104,8 +1172,6 @@ def reminders():
 
             "reminder_time":
                 reminder_time_value,
-
-            # Compatibility with older JS
 
             "date":
                 reminder_date_value,
@@ -1409,10 +1475,6 @@ def edit_reminder(
             )
 
 
-        # ----------------------------------------------------
-        # Reset OLD alarm occurrence.
-        # ----------------------------------------------------
-
         reset_alarms_for_reminder(
 
             reminder.id,
@@ -1440,9 +1502,6 @@ def edit_reminder(
             reminder_time
         )
 
-
-        # If a previously completed reminder is edited,
-        # make it pending again so the new schedule works.
 
         if (
             reminder.status or ""
@@ -1504,8 +1563,6 @@ def delete_reminder(
     )
 
 
-    # Remove persistent alarm records.
-
     reset_alarms_for_reminder(
 
         reminder.id,
@@ -1566,8 +1623,6 @@ def complete_reminder(
     reminder.status = "completed"
 
 
-    # Stop active persistent alarm.
-
     stop_active_alarms_for_reminder(
 
         reminder.id,
@@ -1593,8 +1648,6 @@ def complete_reminder(
 
 # ============================================================
 # COMPLETE REMINDER — API
-#
-# Used by notification JavaScript if needed.
 # ============================================================
 
 @app.route(
@@ -1723,27 +1776,13 @@ def extract_time(
     lower = text.lower()
 
 
-    # --------------------------------------------------------
-    # 12-hour time:
-    #
-    # 7 PM
-    # 7:30 PM
-    # 7.30 PM
-    # 7pm
-    # --------------------------------------------------------
-
     match = re.search(
 
         r"\b"
-
         r"(1[0-2]|[1-9])"
-
         r"(?:[:.]([0-5]\d))?"
-
         r"\s*"
-
         r"(am|pm)"
-
         r"\b",
 
         lower
@@ -1791,13 +1830,6 @@ def extract_time(
         )
 
 
-    # --------------------------------------------------------
-    # 24-hour:
-    #
-    # 19:00
-    # 07:30
-    # --------------------------------------------------------
-
     match = re.search(
 
         r"\b"
@@ -1826,37 +1858,18 @@ def extract_time(
         )
 
 
-    # --------------------------------------------------------
-    # O'CLOCK
-    #
-    # 7 o'clock
-    # 7 o clock
-    # 7 o'clock PM
-    # 7 o clock pm
-    # --------------------------------------------------------
-
     match = re.search(
 
         r"\b"
-
         r"(1[0-2]|[1-9])"
-
         r"\s*"
-
         r"o"
-
         r"\s*"
-
         r"(?:'|’)?"
-
         r"\s*"
-
         r"clock"
-
         r"\s*"
-
         r"(am|pm)?"
-
         r"\b",
 
         lower
@@ -1871,9 +1884,7 @@ def extract_time(
         )
 
 
-        period = (
-            match.group(2)
-        )
+        period = match.group(2)
 
 
         if period == "pm":
@@ -1891,14 +1902,6 @@ def extract_time(
 
 
         else:
-
-            # ------------------------------------------------
-            # No AM/PM was supplied.
-            #
-            # Do NOT arbitrarily make it 9 PM.
-            #
-            # Infer from common context.
-            # ------------------------------------------------
 
             if re.search(
                 r"\b(night|tonight|evening)\b",
@@ -1927,9 +1930,6 @@ def extract_time(
 
             else:
 
-                # Without context, preserve the stated
-                # numeric hour as morning/24h style.
-
                 pass
 
 
@@ -1938,10 +1938,6 @@ def extract_time(
             0
         )
 
-
-    # --------------------------------------------------------
-    # NOON
-    # --------------------------------------------------------
 
     if re.search(
         r"\bnoon\b",
@@ -1953,10 +1949,6 @@ def extract_time(
             0
         )
 
-
-    # --------------------------------------------------------
-    # MIDNIGHT
-    # --------------------------------------------------------
 
     if re.search(
         r"\bmidnight\b",
@@ -1985,10 +1977,6 @@ def extract_date(
     today = india_today()
 
 
-    # --------------------------------------------------------
-    # DAY AFTER TOMORROW
-    # --------------------------------------------------------
-
     if re.search(
         r"\bday\s+after\s+tomorrow\b",
         lower
@@ -2000,10 +1988,6 @@ def extract_date(
             timedelta(days=2)
         )
 
-
-    # --------------------------------------------------------
-    # TOMORROW
-    # --------------------------------------------------------
 
     if re.search(
         r"\btomorrow\b",
@@ -2017,10 +2001,6 @@ def extract_date(
         )
 
 
-    # --------------------------------------------------------
-    # TODAY
-    # --------------------------------------------------------
-
     if re.search(
         r"\btoday\b",
         lower
@@ -2028,10 +2008,6 @@ def extract_date(
 
         return today
 
-
-    # --------------------------------------------------------
-    # WEEKDAY
-    # --------------------------------------------------------
 
     weekdays = {
 
@@ -2061,12 +2037,9 @@ def extract_date(
                 weekday_number
                 -
                 today.weekday()
+
             ) % 7
 
-
-            # If user says Friday and today is Friday,
-            # use next Friday only if the current time
-            # has already passed and no explicit date exists.
 
             if days_ahead == 0:
 
@@ -2081,15 +2054,6 @@ def extract_date(
                 )
             )
 
-
-    # --------------------------------------------------------
-    # MONTH + DAY
-    #
-    # August 25
-    # August 25th
-    # August 25 2026
-    # Aug 25
-    # --------------------------------------------------------
 
     month_names = "|".join(
 
@@ -2107,13 +2071,9 @@ def extract_date(
         r"\b("
         + month_names
         + r")\s+"
-
         r"(\d{1,2})"
-
         r"(?:st|nd|rd|th)?"
-
         r"(?:\s+(\d{4}))?"
-
         r"\b",
 
         lower
@@ -2200,28 +2160,20 @@ def extract_birthday_name(
 
     patterns = [
 
-        # Arun's birthday is August 25
-
         r"\b(.+?)['’]s\s+"
         r"(?:birthday|bday)\b",
 
-
-        # Arun birthday is August 25
 
         r"^\s*(?:add|create|save|set)?\s*"
         r"(.+?)\s+"
         r"(?:birthday|bday)\b",
 
 
-        # Birthday of Arun is August 25
-
         r"\b(?:birthday|bday)"
         r"\s+of\s+"
         r"(.+?)"
         r"(?:\s+is|\s+on|\s*$)",
 
-
-        # add birthday for Arun on August 25
 
         r"\b(?:birthday|bday)"
         r"\s+(?:for|of)\s+"
@@ -2252,8 +2204,6 @@ def extract_birthday_name(
             )
 
 
-            # Remove common leading words.
-
             name = re.sub(
 
                 r"^(add|create|save|set)\s+",
@@ -2266,8 +2216,6 @@ def extract_birthday_name(
 
             )
 
-
-            # Remove trailing date/time language.
 
             name = re.sub(
 
@@ -2306,16 +2254,11 @@ def extract_reminder_title(
     title = text.strip()
 
 
-    # Remove command prefix.
-
     title = re.sub(
 
         r"^\s*"
-
         r"(please\s+)?"
-
         r"remind\s+me"
-
         r"(\s+to)?\s*",
 
         "",
@@ -2330,15 +2273,10 @@ def extract_reminder_title(
     title = re.sub(
 
         r"^\s*"
-
         r"(please\s+)?"
-
         r"(add|create|set)"
-
         r"\s+(a\s+)?"
-
         r"reminder"
-
         r"\s*(to\s+)?",
 
         "",
@@ -2350,20 +2288,13 @@ def extract_reminder_title(
     )
 
 
-    # Remove time.
-
     title = re.sub(
 
         r"\b"
-
         r"(1[0-2]|[1-9])"
-
         r"(?:[:.]([0-5]\d))?"
-
         r"\s*"
-
         r"(am|pm)"
-
         r"\b",
 
         "",
@@ -2378,25 +2309,15 @@ def extract_reminder_title(
     title = re.sub(
 
         r"\b"
-
         r"(1[0-2]|[1-9])"
-
         r"\s*"
-
         r"o"
-
         r"\s*"
-
         r"(?:'|’)?"
-
         r"\s*"
-
         r"clock"
-
         r"\s*"
-
         r"(am|pm)?"
-
         r"\b",
 
         "",
@@ -2407,8 +2328,6 @@ def extract_reminder_title(
 
     )
 
-
-    # Remove common date words.
 
     title = re.sub(
 
@@ -2430,8 +2349,6 @@ def extract_reminder_title(
 
     )
 
-
-    # Remove month/date expressions.
 
     month_names = "|".join(
 
@@ -2596,9 +2513,7 @@ def chat():
                         (
                             "🎂 Please include "
                             "the person's name.\n\n"
-
                             "Example:\n"
-
                             "Arun's birthday is "
                             "August 25"
                         )
@@ -2624,9 +2539,7 @@ def chat():
                             f"🎂 I found {name}, "
                             "but I need the "
                             "birthday date.\n\n"
-
                             "Example:\n"
-
                             "Arun's birthday is "
                             "August 25"
                         )
@@ -2652,9 +2565,6 @@ def chat():
 
 
             if birthday:
-
-                # Existing person's birthday:
-                # update the date.
 
                 reset_alarms_for_birthday(
 
@@ -2731,9 +2641,7 @@ def chat():
                     (
                         "✅ Yes! Received and "
                         f"{action} successfully.\n\n"
-
                         f"🎂 {name}'s Birthday\n"
-
                         f"📅 "
                         f"{birthday_date.strftime('%d %B %Y')}"
                     )
@@ -2799,9 +2707,7 @@ def chat():
                             "⏰ I need a "
                             "time for the "
                             "reminder.\n\n"
-
                             "Example:\n"
-
                             "Remind me to "
                             "study at 7 PM"
                         )
@@ -2813,13 +2719,6 @@ def chat():
                 message
             )
 
-
-            # ------------------------------------------------
-            # If no explicit date:
-            #
-            # use today unless the selected time has already
-            # passed, then schedule for tomorrow.
-            # ------------------------------------------------
 
             if not reminder_date:
 
@@ -2918,12 +2817,9 @@ def chat():
                     (
                         "✅ Yes! Received and "
                         "added successfully.\n\n"
-
                         f"⏰ {title}\n"
-
                         f"📅 "
                         f"{reminder_date.strftime('%d %B %Y')}\n"
-
                         f"🕐 "
                         f"{reminder_time.strftime('%I:%M %p')}"
                     )
@@ -2949,12 +2845,9 @@ def chat():
             "reply":
                 (
                     "👋 I received your message.\n\n"
-
                     "Try:\n"
-
                     "⏰ Remind me to study "
                     "at 7 PM\n"
-
                     "🎂 Arun's birthday is "
                     "August 25"
                 )
@@ -2994,13 +2887,6 @@ def chat():
 # OLD DUE REMINDERS API
 #
 # KEPT FOR BACKWARD COMPATIBILITY.
-#
-# The NEW app.js should use:
-#
-# /api/notifications/due
-#
-# This endpoint is retained so any older JS does not immediately
-# break while you transition to the new notification engine.
 # ============================================================
 
 @app.route(
@@ -3099,16 +2985,6 @@ def due_reminders():
 
 # ============================================================
 # UPCOMING BIRTHDAYS
-#
-# Preserves:
-#
-# 5 days
-# 4 days
-# 3 days
-# 2 days
-# 1 day
-# tomorrow
-# today
 # ============================================================
 
 @app.route(
@@ -3167,8 +3043,6 @@ def upcoming_birthdays():
 
 
         except ValueError:
-
-            # Feb 29 in non-leap year.
 
             if (
                 month == 2
