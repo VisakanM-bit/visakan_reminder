@@ -457,7 +457,7 @@ def register():
         )
 
         # ----------------------------------------------------
-        # SAVE TO DATABASE
+        # SAVE USER TO DATABASE
         # ----------------------------------------------------
 
         try:
@@ -466,15 +466,20 @@ def register():
 
             db.session.commit()
 
-            # Force SQLAlchemy to obtain the
-            # newly generated database ID.
             db.session.refresh(user)
 
             app.logger.info(
-                "REGISTER SUCCESS: "
-                "user_id=%s email=%s",
+                "REGISTER SUCCESS - USER ID: %s - EMAIL: %s",
                 user.id,
                 user.email
+            )
+
+            # Password is hidden from this log.
+            app.logger.info(
+                "DATABASE USED BY RENDER: %s",
+                db.engine.url.render_as_string(
+                    hide_password=True
+                )
             )
 
         except Exception as error:
@@ -497,6 +502,29 @@ def register():
 
         # ----------------------------------------------------
         # LOGIN NEW USER
+        # ----------------------------------------------------
+
+        login_user(user)
+
+        flash(
+            "Account created successfully!",
+            "success"
+        )
+
+        return redirect(
+            url_for("home")
+        )
+
+    # --------------------------------------------------------
+    # GET REGISTER PAGE
+    # --------------------------------------------------------
+
+    return render_template(
+        "register.html"
+    )
+
+
+# LOGIN NEW USER
         # ----------------------------------------------------
 
         login_user(user)
