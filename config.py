@@ -1,5 +1,4 @@
 import os
-
 from pathlib import Path
 
 
@@ -29,19 +28,67 @@ class Config:
     # --------------------------------------------------------
     # DATABASE
     #
-    # Render:
-    #   DATABASE_URL environment variable
+    # PRODUCTION / RENDER:
+    #   Uses DATABASE_URL from Render Environment Variables
     #
-    # Local:
-    #   SQLite fallback
+    # LOCAL:
+    #   Falls back to SQLite
+    #
+    # For TiDB Cloud Starter, DATABASE_URL should contain:
+    #
+    # mysql+pymysql://USERNAME:PASSWORD@HOST:4000/DATABASE
+    # ?ssl_verify_cert=true&ssl_verify_identity=true
     # --------------------------------------------------------
 
-    SQLALCHEMY_DATABASE_URI = (
-        os.environ.get("DATABASE_URL")
-        or
-        f"sqlite:///{BASE_DIR / 'bday_reminder.db'}"
-    )
+    DATABASE_URL = os.environ.get("DATABASE_URL")
 
+
+    if DATABASE_URL:
+
+        # ----------------------------------------------------
+        # TiDB Cloud Starter TLS
+        #
+        # TiDB requires TLS for public connections.
+        # Add the required SSL parameters automatically
+        # if they are not already present.
+        # ----------------------------------------------------
+
+        if DATABASE_URL.startswith(
+            "mysql+pymysql://"
+        ):
+
+            if "ssl_verify_cert=" not in DATABASE_URL:
+
+                separator = (
+                    "&"
+                    if "?" in DATABASE_URL
+                    else "?"
+                )
+
+                DATABASE_URL += (
+                    separator
+                    + "ssl_verify_cert=true"
+                    + "&ssl_verify_identity=true"
+                )
+
+
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+
+
+    else:
+
+        # ----------------------------------------------------
+        # LOCAL DEVELOPMENT
+        # ----------------------------------------------------
+
+        SQLALCHEMY_DATABASE_URI = (
+            f"sqlite:///{BASE_DIR / 'bday_reminder.db'}"
+        )
+
+
+    # --------------------------------------------------------
+    # SQLALCHEMY
+    # --------------------------------------------------------
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -52,7 +99,7 @@ class Config:
 
     SQLALCHEMY_ENGINE_OPTIONS = {
 
-        "pool_pre_ping": True
+        "pool_pre_ping": True,
 
     }
 
@@ -74,10 +121,13 @@ class Config:
 
 
     # --------------------------------------------------------
-    # RENDER / HTTPS
+    # SESSION COOKIE SECURITY
     #
-    # Local development remains normal HTTP.
-    # Production HTTPS can be enabled by environment.
+    # Local:
+    #   HTTP is allowed
+    #
+    # Render:
+    #   Set SESSION_COOKIE_SECURE=1
     # --------------------------------------------------------
 
     SESSION_COOKIE_SECURE = (

@@ -2,7 +2,11 @@
 # BDAY REMINDER
 # COMPLETE APPLICATION
 #
-# Existing functionality preserved:
+# Database:
+# - Render + TiDB Cloud through DATABASE_URL
+# - Local SQLite fallback
+#
+# Existing functionality:
 # - Login
 # - Register
 # - Logout
@@ -21,7 +25,7 @@
 # - Settings
 # - Upcoming Birthday API
 #
-# Added / integrated:
+# Notifications:
 # - Persistent notification alarm system
 # - 5-minute repeat notification
 # - STOP support
@@ -29,8 +33,6 @@
 # - Chat → Birthday integration
 # - Alarm reset when reminder is edited
 # - Alarm cleanup when reminder is deleted/completed
-# - Render database configuration
-# - Local SQLite fallback
 # ============================================================
 
 
@@ -87,8 +89,6 @@ from database.models import (
 
 # ============================================================
 # NOTIFICATION SERVICE
-#
-# This is the single persistent notification engine.
 # ============================================================
 
 from notification_service import (
@@ -111,92 +111,18 @@ app.config.from_object(Config)
 # ============================================================
 # DATABASE CONFIGURATION
 #
-# Priority:
+# config.py is now responsible for selecting:
 #
 # 1. Render DATABASE_URL
-# 2. DATABASE_URL from Config
-# 3. Local SQLite fallback
+# 2. Local SQLite fallback
 #
-# This prevents:
-#
-# Error: Either 'SQLALCHEMY_DATABASE_URI'
-# or 'SQLALCHEMY_BINDS' must be set.
+# We intentionally do NOT overwrite the database URI here.
 # ============================================================
 
-database_url = (
-    os.environ.get("DATABASE_URL")
-    or app.config.get("SQLALCHEMY_DATABASE_URI")
-)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-
-# ------------------------------------------------------------
-# Render / PostgreSQL compatibility
-#
-# Some PostgreSQL providers return:
-#
-# postgres://...
-#
-# SQLAlchemy expects:
-#
-# postgresql://...
-# ------------------------------------------------------------
-
-if database_url:
-
-    if database_url.startswith(
-        "postgres://"
-    ):
-
-        database_url = database_url.replace(
-            "postgres://",
-            "postgresql://",
-            1
-        )
-
-
-# ------------------------------------------------------------
-# Local fallback
-#
-# This keeps the application working normally on your PC
-# even when DATABASE_URL is not configured.
-# ------------------------------------------------------------
-
-if not database_url:
-
-    database_path = os.path.join(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        ),
-        "bday_reminder.db"
-    )
-
-    database_url = (
-        "sqlite:///"
-        +
-        database_path
-    )
-
-
-app.config[
-    "SQLALCHEMY_DATABASE_URI"
-] = database_url
-
-
-app.config[
-    "SQLALCHEMY_TRACK_MODIFICATIONS"
-] = False
-
-
-# ------------------------------------------------------------
-# SQLAlchemy connection health
-# ------------------------------------------------------------
-
-app.config[
-    "SQLALCHEMY_ENGINE_OPTIONS"
-] = {
-
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True
-
 }
 
 
@@ -204,36 +130,28 @@ app.config[
 # BCRYPT
 # ============================================================
 
-bcrypt = Bcrypt(
-    app
-)
+bcrypt = Bcrypt(app)
 
 
 # ============================================================
 # DATABASE
 # ============================================================
 
-db.init_app(
-    app
-)
+db.init_app(app)
 
 
 # ============================================================
 # NOTIFICATION BLUEPRINT
 # ============================================================
 
-app.register_blueprint(
-    notification_bp
-)
+app.register_blueprint(notification_bp)
 
 
 # ============================================================
 # TIMEZONE
 # ============================================================
 
-INDIA_TZ = ZoneInfo(
-    "Asia/Kolkata"
-)
+INDIA_TZ = ZoneInfo("Asia/Kolkata")
 
 
 def india_now():
@@ -241,23 +159,20 @@ def india_now():
     Return current India local time
     as a naive datetime.
 
-    Existing database stores Date/Time separately,
-    so we keep the returned datetime naive for
-    comparison with SQLAlchemy Date and Time fields.
+    Database stores Date and Time separately,
+    so a naive datetime is used for comparisons.
     """
 
     return (
         datetime
         .now(INDIA_TZ)
-        .replace(
-            tzinfo=None
-        )
+        .replace(tzinfo=None)
     )
 
 
 def india_today():
     """
-    Current date in India.
+    Return today's date in India.
     """
 
     return india_now().date()
@@ -267,9 +182,7 @@ def india_today():
 # LOGIN MANAGER
 # ============================================================
 
-login_manager = LoginManager(
-    app
-)
+login_manager = LoginManager(app)
 
 login_manager.login_view = "login"
 
@@ -302,131 +215,82 @@ def home():
 
     today = india_today()
 
-
     birthdays = (
-
         Birthday.query
-
         .filter_by(
             user_id=current_user.id
         )
-
         .order_by(
             Birthday.birthday.asc()
         )
-
         .all()
-
     )
 
-
     all_reminders = (
-
         Reminder.query
-
         .filter_by(
             user_id=current_user.id
         )
-
         .order_by(
             Reminder.reminder_date.asc(),
             Reminder.reminder_time.asc()
         )
-
         .all()
-
     )
-
 
     reminders = [
-
         r
-
         for r in all_reminders
-
         if (
             r.status or "pending"
-        ).lower()
-        == "pending"
-
+        ).lower() == "pending"
     ]
-
 
     completed_count = sum(
-
         1
-
         for r in all_reminders
-
         if (
             r.status or ""
-        ).lower()
-        == "completed"
-
+        ).lower() == "completed"
     )
-
 
     cancelled_count = sum(
-
         1
-
         for r in all_reminders
-
         if (
             r.status or ""
-        ).lower()
-        == "cancelled"
-
+        ).lower() == "cancelled"
     )
 
-
     today_reminders = [
-
         r
-
         for r in all_reminders
-
         if r.reminder_date == today
-
     ]
 
-
     today_birthdays = [
-
         b
-
         for b in birthdays
-
         if (
             b.birthday
             and
-            b.birthday.month
-            == today.month
+            b.birthday.month == today.month
             and
-            b.birthday.day
-            == today.day
+            b.birthday.day == today.day
         )
-
     ]
 
-
     upcoming_reminders = [
-
         r
-
         for r in reminders
-
         if (
             r.reminder_date
             and
             r.reminder_date >= today
         )
-
     ]
 
-
     return render_template(
-
         "dashboard.html",
 
         user=current_user,
@@ -454,7 +318,6 @@ def home():
         upcoming_reminders=upcoming_reminders,
 
         upcoming_birthdays=birthdays
-
     )
 
 
@@ -474,7 +337,6 @@ def register():
             url_for("home")
         )
 
-
     if request.method == "POST":
 
         name = request.form.get(
@@ -482,18 +344,15 @@ def register():
             ""
         ).strip()
 
-
         email = request.form.get(
             "email",
             ""
         ).strip().lower()
 
-
         password = request.form.get(
             "password",
             ""
         )
-
 
         if (
             not name
@@ -512,19 +371,13 @@ def register():
                 url_for("register")
             )
 
-
         existing = (
-
             User.query
-
             .filter_by(
                 email=email
             )
-
             .first()
-
         )
-
 
         if existing:
 
@@ -537,53 +390,49 @@ def register():
                 url_for("register")
             )
 
-
         password_hash = (
-
             bcrypt
-
             .generate_password_hash(
                 password
             )
-
             .decode("utf-8")
-
         )
-
 
         user = User(
-
             name=name,
-
             email=email,
-
             password_hash=password_hash
-
         )
 
+        try:
 
-        db.session.add(
-            user
-        )
+            db.session.add(user)
 
-        db.session.commit()
+            db.session.commit()
 
+        except Exception:
 
-        login_user(
-            user
-        )
+            db.session.rollback()
 
+            flash(
+                "Unable to create the account right now.",
+                "error"
+            )
+
+            return redirect(
+                url_for("register")
+            )
+
+        login_user(user)
 
         flash(
             "Account created successfully!",
             "success"
         )
 
-
         return redirect(
             url_for("home")
         )
-
 
     return render_template(
         "register.html"
@@ -606,7 +455,6 @@ def login():
             url_for("home")
         )
 
-
     if request.method == "POST":
 
         email = request.form.get(
@@ -614,65 +462,53 @@ def login():
             ""
         ).strip().lower()
 
-
         password = request.form.get(
             "password",
             ""
         )
 
-
         user = (
-
             User.query
-
             .filter_by(
                 email=email
             )
-
             .first()
-
         )
 
-
         if (
-
             user
-
             and
-
             bcrypt.check_password_hash(
                 user.password_hash,
                 password
             )
-
         ):
 
-            login_user(
-                user
-            )
-
+            login_user(user)
 
             next_page = request.args.get(
                 "next"
             )
 
+            # Prevent open redirects.
+            if (
+                next_page
+                and
+                next_page.startswith("/")
+                and
+                not next_page.startswith("//")
+            ):
+
+                return redirect(next_page)
 
             return redirect(
-
-                next_page
-
-                or
-
                 url_for("home")
-
             )
-
 
         flash(
             "Invalid email or password.",
             "error"
         )
-
 
     return render_template(
         "login.html"
@@ -683,20 +519,16 @@ def login():
 # LOGOUT
 # ============================================================
 
-@app.route(
-    "/logout"
-)
+@app.route("/logout")
 @login_required
 def logout():
 
     logout_user()
 
-
     flash(
         "You have been logged out.",
         "success"
     )
-
 
     return redirect(
         url_for("login")
@@ -707,35 +539,24 @@ def logout():
 # BIRTHDAYS
 # ============================================================
 
-@app.route(
-    "/birthdays"
-)
+@app.route("/birthdays")
 @login_required
 def birthdays():
 
     birthday_list = (
-
         Birthday.query
-
         .filter_by(
             user_id=current_user.id
         )
-
         .order_by(
             Birthday.birthday.asc()
         )
-
         .all()
-
     )
 
-
     return render_template(
-
         "birthdays.html",
-
         birthdays=birthday_list
-
     )
 
 
@@ -757,30 +578,25 @@ def add_birthday():
             ""
         ).strip()
 
-
         birthday_value = request.form.get(
             "birthday",
             ""
         ).strip()
-
 
         phone = request.form.get(
             "phone",
             ""
         ).strip()
 
-
         relationship = request.form.get(
             "relationship",
             ""
         ).strip()
 
-
         notes = request.form.get(
             "notes",
             ""
         ).strip()
-
 
         if (
             not name
@@ -794,22 +610,15 @@ def add_birthday():
             )
 
             return redirect(
-                url_for(
-                    "add_birthday"
-                )
+                url_for("add_birthday")
             )
-
 
         try:
 
             birthday_date = datetime.strptime(
-
                 birthday_value,
-
                 "%Y-%m-%d"
-
             ).date()
-
 
         except ValueError:
 
@@ -819,49 +628,45 @@ def add_birthday():
             )
 
             return redirect(
-                url_for(
-                    "add_birthday"
-                )
+                url_for("add_birthday")
             )
 
-
         birthday = Birthday(
-
             user_id=current_user.id,
-
             name=name,
-
             birthday=birthday_date,
-
             phone=phone or None,
-
             relationship=relationship or None,
-
             notes=notes or None
-
         )
 
+        try:
 
-        db.session.add(
-            birthday
-        )
+            db.session.add(birthday)
 
-        db.session.commit()
+            db.session.commit()
 
+        except Exception:
+
+            db.session.rollback()
+
+            flash(
+                "Unable to save birthday.",
+                "error"
+            )
+
+            return redirect(
+                url_for("add_birthday")
+            )
 
         flash(
-
             f"{name}'s birthday was added!",
-
             "success"
-
         )
-
 
         return redirect(
             url_for("birthdays")
         )
-
 
     return render_template(
         "add_birthday.html"
@@ -877,26 +682,16 @@ def add_birthday():
     methods=["GET", "POST"]
 )
 @login_required
-def edit_birthday(
-    birthday_id
-):
+def edit_birthday(birthday_id):
 
     birthday = (
-
         Birthday.query
-
         .filter_by(
-
             id=birthday_id,
-
             user_id=current_user.id
-
         )
-
         .first_or_404()
-
     )
-
 
     if request.method == "POST":
 
@@ -905,30 +700,25 @@ def edit_birthday(
             ""
         ).strip()
 
-
         birthday_value = request.form.get(
             "birthday",
             ""
         ).strip()
-
 
         phone = request.form.get(
             "phone",
             ""
         ).strip()
 
-
         relationship = request.form.get(
             "relationship",
             ""
         ).strip()
 
-
         notes = request.form.get(
             "notes",
             ""
         ).strip()
-
 
         if (
             not name
@@ -942,28 +732,18 @@ def edit_birthday(
             )
 
             return redirect(
-
                 url_for(
-
                     "edit_birthday",
-
                     birthday_id=birthday.id
-
                 )
-
             )
-
 
         try:
 
             birthday_date = datetime.strptime(
-
                 birthday_value,
-
                 "%Y-%m-%d"
-
             ).date()
-
 
         except ValueError:
 
@@ -973,64 +753,61 @@ def edit_birthday(
             )
 
             return redirect(
-
                 url_for(
-
                     "edit_birthday",
-
                     birthday_id=birthday.id
-
                 )
-
             )
-
 
         birthday.name = name
 
         birthday.birthday = birthday_date
 
-        birthday.phone = (
-            phone or None
-        )
+        birthday.phone = phone or None
 
         birthday.relationship = (
             relationship or None
         )
 
-        birthday.notes = (
-            notes or None
-        )
+        birthday.notes = notes or None
 
+        try:
 
-        reset_alarms_for_birthday(
+            reset_alarms_for_birthday(
+                birthday.id,
+                current_user.id
+            )
 
-            birthday.id,
+            db.session.commit()
 
-            current_user.id
+        except Exception:
 
-        )
+            db.session.rollback()
 
+            flash(
+                "Unable to update birthday.",
+                "error"
+            )
 
-        db.session.commit()
-
+            return redirect(
+                url_for(
+                    "edit_birthday",
+                    birthday_id=birthday.id
+                )
+            )
 
         flash(
             "Birthday updated successfully!",
             "success"
         )
 
-
         return redirect(
             url_for("birthdays")
         )
 
-
     return render_template(
-
         "edit_birthday.html",
-
         birthday=birthday
-
     )
 
 
@@ -1043,48 +820,45 @@ def edit_birthday(
     methods=["POST"]
 )
 @login_required
-def delete_birthday(
-    birthday_id
-):
+def delete_birthday(birthday_id):
 
     birthday = (
-
         Birthday.query
-
         .filter_by(
-
             id=birthday_id,
-
             user_id=current_user.id
+        )
+        .first_or_404()
+    )
 
+    try:
+
+        reset_alarms_for_birthday(
+            birthday.id,
+            current_user.id
         )
 
-        .first_or_404()
+        db.session.delete(birthday)
 
-    )
+        db.session.commit()
 
+    except Exception:
 
-    reset_alarms_for_birthday(
+        db.session.rollback()
 
-        birthday.id,
+        flash(
+            "Unable to delete birthday.",
+            "error"
+        )
 
-        current_user.id
-
-    )
-
-
-    db.session.delete(
-        birthday
-    )
-
-    db.session.commit()
-
+        return redirect(
+            url_for("birthdays")
+        )
 
     flash(
         "Birthday deleted.",
         "success"
     )
-
 
     return redirect(
         url_for("birthdays")
@@ -1095,63 +869,41 @@ def delete_birthday(
 # REMINDERS
 # ============================================================
 
-@app.route(
-    "/reminders"
-)
+@app.route("/reminders")
 @login_required
 def reminders():
 
     reminder_list = (
-
         Reminder.query
-
         .filter_by(
             user_id=current_user.id
         )
-
         .order_by(
-
             Reminder.reminder_date.asc(),
-
             Reminder.reminder_time.asc()
-
         )
-
         .all()
-
     )
 
-
     reminders_json = []
-
 
     for reminder in reminder_list:
 
         reminder_date_value = (
-
             reminder.reminder_date.strftime(
                 "%Y-%m-%d"
             )
-
             if reminder.reminder_date
-
             else ""
-
         )
 
-
         reminder_time_value = (
-
             reminder.reminder_time.strftime(
                 "%H:%M"
             )
-
             if reminder.reminder_time
-
             else ""
-
         )
-
 
         reminders_json.append({
 
@@ -1187,18 +939,12 @@ def reminders():
 
             "type":
                 reminder.reminder_type or "custom"
-
         })
 
-
     return render_template(
-
         "reminder.html",
-
         reminders=reminder_list,
-
         reminders_json=reminders_json
-
     )
 
 
@@ -1220,30 +966,25 @@ def add_reminder():
             ""
         ).strip()
 
-
         description = request.form.get(
             "description",
             ""
         ).strip()
-
 
         place = request.form.get(
             "place",
             ""
         ).strip()
 
-
         date_value = request.form.get(
             "reminder_date",
             ""
         ).strip()
 
-
         time_value = request.form.get(
             "reminder_time",
             ""
         ).strip()
-
 
         if (
             not title
@@ -1259,31 +1000,20 @@ def add_reminder():
             )
 
             return redirect(
-                url_for(
-                    "add_reminder"
-                )
+                url_for("add_reminder")
             )
-
 
         try:
 
             reminder_date = datetime.strptime(
-
                 date_value,
-
                 "%Y-%m-%d"
-
             ).date()
 
-
             reminder_time = datetime.strptime(
-
                 time_value,
-
                 "%H:%M"
-
             ).time()
-
 
         except ValueError:
 
@@ -1293,54 +1023,47 @@ def add_reminder():
             )
 
             return redirect(
-                url_for(
-                    "add_reminder"
-                )
+                url_for("add_reminder")
             )
 
-
         reminder = Reminder(
-
             user_id=current_user.id,
-
             title=title,
-
-            description=(
-                description or None
-            ),
-
-            place=(
-                place or None
-            ),
-
+            description=description or None,
+            place=place or None,
             reminder_date=reminder_date,
-
             reminder_time=reminder_time,
-
             status="pending",
-
             reminder_type="custom"
-
         )
 
+        try:
 
-        db.session.add(
-            reminder
-        )
+            db.session.add(reminder)
 
-        db.session.commit()
+            db.session.commit()
 
+        except Exception:
+
+            db.session.rollback()
+
+            flash(
+                "Unable to create reminder.",
+                "error"
+            )
+
+            return redirect(
+                url_for("add_reminder")
+            )
 
         flash(
             "Reminder created successfully!",
             "success"
         )
 
-
         return redirect(
             url_for("reminders")
         )
-
 
     return render_template(
         "add_reminder.html"
@@ -1356,26 +1079,16 @@ def add_reminder():
     methods=["GET", "POST"]
 )
 @login_required
-def edit_reminder(
-    reminder_id
-):
+def edit_reminder(reminder_id):
 
     reminder = (
-
         Reminder.query
-
         .filter_by(
-
             id=reminder_id,
-
             user_id=current_user.id
-
         )
-
         .first_or_404()
-
     )
-
 
     if request.method == "POST":
 
@@ -1384,30 +1097,25 @@ def edit_reminder(
             ""
         ).strip()
 
-
         description = request.form.get(
             "description",
             ""
         ).strip()
-
 
         place = request.form.get(
             "place",
             ""
         ).strip()
 
-
         date_value = request.form.get(
             "reminder_date",
             ""
         ).strip()
 
-
         time_value = request.form.get(
             "reminder_time",
             ""
         ).strip()
-
 
         if (
             not title
@@ -1423,37 +1131,23 @@ def edit_reminder(
             )
 
             return redirect(
-
                 url_for(
-
                     "edit_reminder",
-
                     reminder_id=reminder.id
-
                 )
-
             )
-
 
         try:
 
             reminder_date = datetime.strptime(
-
                 date_value,
-
                 "%Y-%m-%d"
-
             ).date()
 
-
             reminder_time = datetime.strptime(
-
                 time_value,
-
                 "%H:%M"
-
             ).time()
-
 
         except ValueError:
 
@@ -1463,73 +1157,73 @@ def edit_reminder(
             )
 
             return redirect(
-
                 url_for(
-
                     "edit_reminder",
-
                     reminder_id=reminder.id
-
                 )
-
             )
 
+        try:
 
-        reset_alarms_for_reminder(
+            reset_alarms_for_reminder(
+                reminder.id,
+                current_user.id
+            )
 
-            reminder.id,
+            reminder.title = title
 
-            current_user.id
+            reminder.description = (
+                description or None
+            )
 
-        )
+            reminder.place = (
+                place or None
+            )
 
+            reminder.reminder_date = (
+                reminder_date
+            )
 
-        reminder.title = title
+            reminder.reminder_time = (
+                reminder_time
+            )
 
-        reminder.description = (
-            description or None
-        )
+            if (
+                reminder.status or ""
+            ).lower() == "completed":
 
-        reminder.place = (
-            place or None
-        )
+                reminder.status = "pending"
 
-        reminder.reminder_date = (
-            reminder_date
-        )
+            db.session.commit()
 
-        reminder.reminder_time = (
-            reminder_time
-        )
+        except Exception:
 
+            db.session.rollback()
 
-        if (
-            reminder.status or ""
-        ).lower() == "completed":
+            flash(
+                "Unable to update reminder.",
+                "error"
+            )
 
-            reminder.status = "pending"
-
-
-        db.session.commit()
-
+            return redirect(
+                url_for(
+                    "edit_reminder",
+                    reminder_id=reminder.id
+                )
+            )
 
         flash(
             "Reminder updated successfully!",
             "success"
         )
 
-
         return redirect(
             url_for("reminders")
         )
 
-
     return render_template(
-
         "edit_reminder.html",
-
         reminder=reminder
-
     )
 
 
@@ -1542,48 +1236,45 @@ def edit_reminder(
     methods=["POST"]
 )
 @login_required
-def delete_reminder(
-    reminder_id
-):
+def delete_reminder(reminder_id):
 
     reminder = (
-
         Reminder.query
-
         .filter_by(
-
             id=reminder_id,
-
             user_id=current_user.id
+        )
+        .first_or_404()
+    )
 
+    try:
+
+        reset_alarms_for_reminder(
+            reminder.id,
+            current_user.id
         )
 
-        .first_or_404()
+        db.session.delete(reminder)
 
-    )
+        db.session.commit()
 
+    except Exception:
 
-    reset_alarms_for_reminder(
+        db.session.rollback()
 
-        reminder.id,
+        flash(
+            "Unable to delete reminder.",
+            "error"
+        )
 
-        current_user.id
-
-    )
-
-
-    db.session.delete(
-        reminder
-    )
-
-    db.session.commit()
-
+        return redirect(
+            url_for("reminders")
+        )
 
     flash(
         "Reminder deleted.",
         "success"
     )
-
 
     return redirect(
         url_for("reminders")
@@ -1599,47 +1290,45 @@ def delete_reminder(
     methods=["POST"]
 )
 @login_required
-def complete_reminder(
-    reminder_id
-):
+def complete_reminder(reminder_id):
 
     reminder = (
-
         Reminder.query
-
         .filter_by(
-
             id=reminder_id,
-
             user_id=current_user.id
+        )
+        .first_or_404()
+    )
 
+    try:
+
+        reminder.status = "completed"
+
+        stop_active_alarms_for_reminder(
+            reminder.id,
+            current_user.id
         )
 
-        .first_or_404()
+        db.session.commit()
 
-    )
+    except Exception:
 
+        db.session.rollback()
 
-    reminder.status = "completed"
+        flash(
+            "Unable to complete reminder.",
+            "error"
+        )
 
-
-    stop_active_alarms_for_reminder(
-
-        reminder.id,
-
-        current_user.id
-
-    )
-
-
-    db.session.commit()
-
+        return redirect(
+            url_for("reminders")
+        )
 
     flash(
         "Reminder completed!",
         "success"
     )
-
 
     return redirect(
         url_for("reminders")
@@ -1655,52 +1344,44 @@ def complete_reminder(
     methods=["POST"]
 )
 @login_required
-def complete_reminder_api(
-    reminder_id
-):
+def complete_reminder_api(reminder_id):
 
     reminder = (
-
         Reminder.query
-
         .filter_by(
-
             id=reminder_id,
-
             user_id=current_user.id
+        )
+        .first_or_404()
+    )
 
+    try:
+
+        reminder.status = "completed"
+
+        stop_active_alarms_for_reminder(
+            reminder.id,
+            current_user.id
         )
 
-        .first_or_404()
+        db.session.commit()
 
-    )
+    except Exception:
 
+        db.session.rollback()
 
-    reminder.status = "completed"
-
-
-    stop_active_alarms_for_reminder(
-
-        reminder.id,
-
-        current_user.id
-
-    )
-
-
-    db.session.commit()
-
+        return jsonify({
+            "success": False,
+            "message": "Unable to complete reminder."
+        }), 500
 
     return jsonify({
 
-        "success":
-            True,
+        "success": True,
 
-        "id":
-            reminder.id,
+        "id": reminder.id,
 
-        "status":
-            reminder.status
+        "status": reminder.status
 
     })
 
@@ -1709,9 +1390,7 @@ def complete_reminder_api(
 # CHAT PAGE
 # ============================================================
 
-@app.route(
-    "/chat"
-)
+@app.route("/chat")
 @login_required
 def chat_page():
 
@@ -1761,7 +1440,6 @@ MONTHS = {
 
     "december": 12,
     "dec": 12
-
 }
 
 
@@ -1769,97 +1447,55 @@ MONTHS = {
 # EXTRACT TIME
 # ============================================================
 
-def extract_time(
-    text
-):
+def extract_time(text):
 
     lower = text.lower()
 
-
     match = re.search(
-
         r"\b"
         r"(1[0-2]|[1-9])"
         r"(?:[:.]([0-5]\d))?"
         r"\s*"
         r"(am|pm)"
         r"\b",
-
         lower
-
     )
-
 
     if match:
 
-        hour = int(
-            match.group(1)
-        )
-
+        hour = int(match.group(1))
 
         minute = int(
-            match.group(2)
-            or 0
+            match.group(2) or 0
         )
-
 
         period = match.group(3)
 
-
-        if (
-            period == "pm"
-            and
-            hour != 12
-        ):
-
+        if period == "pm" and hour != 12:
             hour += 12
 
-
-        if (
-            period == "am"
-            and
-            hour == 12
-        ):
-
+        if period == "am" and hour == 12:
             hour = 0
 
-
-        return time(
-            hour,
-            minute
-        )
-
+        return time(hour, minute)
 
     match = re.search(
-
         r"\b"
         r"([01]\d|2[0-3])"
         r":"
         r"([0-5]\d)"
         r"\b",
-
         lower
-
     )
-
 
     if match:
 
         return time(
-
-            int(
-                match.group(1)
-            ),
-
-            int(
-                match.group(2)
-            )
-
+            int(match.group(1)),
+            int(match.group(2))
         )
 
-
     match = re.search(
-
         r"\b"
         r"(1[0-2]|[1-9])"
         r"\s*"
@@ -1871,35 +1507,24 @@ def extract_time(
         r"\s*"
         r"(am|pm)?"
         r"\b",
-
         lower
-
     )
-
 
     if match:
 
-        hour = int(
-            match.group(1)
-        )
-
+        hour = int(match.group(1))
 
         period = match.group(2)
-
 
         if period == "pm":
 
             if hour != 12:
-
                 hour += 12
-
 
         elif period == "am":
 
             if hour == 12:
-
                 hour = 0
-
 
         else:
 
@@ -1909,7 +1534,6 @@ def extract_time(
             ):
 
                 if hour < 12:
-
                     hour += 12
 
             elif re.search(
@@ -1918,48 +1542,23 @@ def extract_time(
             ):
 
                 if hour < 12:
-
                     hour += 12
 
-            elif re.search(
-                r"\b(morning)\b",
-                lower
-            ):
-
-                pass
-
-            else:
-
-                pass
-
-
-        return time(
-            hour,
-            0
-        )
-
+        return time(hour, 0)
 
     if re.search(
         r"\bnoon\b",
         lower
     ):
 
-        return time(
-            12,
-            0
-        )
-
+        return time(12, 0)
 
     if re.search(
         r"\bmidnight\b",
         lower
     ):
 
-        return time(
-            0,
-            0
-        )
-
+        return time(0, 0)
 
     return None
 
@@ -1968,38 +1567,25 @@ def extract_time(
 # EXTRACT DATE
 # ============================================================
 
-def extract_date(
-    text
-):
+def extract_date(text):
 
     lower = text.lower()
 
     today = india_today()
-
 
     if re.search(
         r"\bday\s+after\s+tomorrow\b",
         lower
     ):
 
-        return (
-            today
-            +
-            timedelta(days=2)
-        )
-
+        return today + timedelta(days=2)
 
     if re.search(
         r"\btomorrow\b",
         lower
     ):
 
-        return (
-            today
-            +
-            timedelta(days=1)
-        )
-
+        return today + timedelta(days=1)
 
     if re.search(
         r"\btoday\b",
@@ -2007,7 +1593,6 @@ def extract_date(
     ):
 
         return today
-
 
     weekdays = {
 
@@ -2018,9 +1603,7 @@ def extract_date(
         "friday": 4,
         "saturday": 5,
         "sunday": 6
-
     }
-
 
     for (
         weekday_name,
@@ -2033,41 +1616,24 @@ def extract_date(
         ):
 
             days_ahead = (
-
                 weekday_number
                 -
                 today.weekday()
-
             ) % 7
 
-
             if days_ahead == 0:
-
                 days_ahead = 7
 
-
-            return (
-                today
-                +
-                timedelta(
-                    days=days_ahead
-                )
+            return today + timedelta(
+                days=days_ahead
             )
 
-
     month_names = "|".join(
-
-        re.escape(
-            value
-        )
-
+        re.escape(value)
         for value in MONTHS.keys()
-
     )
 
-
     match = re.search(
-
         r"\b("
         + month_names
         + r")\s+"
@@ -2075,11 +1641,8 @@ def extract_date(
         r"(?:st|nd|rd|th)?"
         r"(?:\s+(\d{4}))?"
         r"\b",
-
         lower
-
     )
-
 
     if match:
 
@@ -2087,40 +1650,25 @@ def extract_date(
             match.group(1)
         ]
 
-
         day = int(
             match.group(2)
         )
 
-
-        supplied_year = (
-            match.group(3)
-        )
-
+        supplied_year = match.group(3)
 
         year = (
-
             int(supplied_year)
-
             if supplied_year
-
             else today.year
-
         )
-
 
         try:
 
             result = date(
-
                 year,
-
                 month,
-
                 day
-
             )
-
 
             if (
                 not supplied_year
@@ -2129,23 +1677,16 @@ def extract_date(
             ):
 
                 result = date(
-
                     year + 1,
-
                     month,
-
                     day
-
                 )
 
-
             return result
-
 
         except ValueError:
 
             return None
-
 
     return None
 
@@ -2154,47 +1695,35 @@ def extract_date(
 # EXTRACT BIRTHDAY NAME
 # ============================================================
 
-def extract_birthday_name(
-    text
-):
+def extract_birthday_name(text):
 
     patterns = [
 
         r"\b(.+?)['’]s\s+"
         r"(?:birthday|bday)\b",
 
-
         r"^\s*(?:add|create|save|set)?\s*"
         r"(.+?)\s+"
         r"(?:birthday|bday)\b",
-
 
         r"\b(?:birthday|bday)"
         r"\s+of\s+"
         r"(.+?)"
         r"(?:\s+is|\s+on|\s*$)",
 
-
         r"\b(?:birthday|bday)"
         r"\s+(?:for|of)\s+"
         r"(.+?)"
         r"(?:\s+is|\s+on|\s*$)"
-
     ]
-
 
     for pattern in patterns:
 
         match = re.search(
-
             pattern,
-
             text,
-
             re.IGNORECASE
-
         )
-
 
         if match:
 
@@ -2203,42 +1732,26 @@ def extract_birthday_name(
                 .strip()
             )
 
-
             name = re.sub(
-
                 r"^(add|create|save|set)\s+",
-
                 "",
-
                 name,
-
                 flags=re.IGNORECASE
-
             )
-
 
             name = re.sub(
-
                 r"\s+(?:is|on)\s+.*$",
-
                 "",
-
                 name,
-
                 flags=re.IGNORECASE
-
             )
-
 
             name = name.strip(
                 " .,!?-"
             )
 
-
             if name:
-
                 return name
-
 
     return ""
 
@@ -2247,67 +1760,45 @@ def extract_birthday_name(
 # EXTRACT REMINDER TITLE
 # ============================================================
 
-def extract_reminder_title(
-    text
-):
+def extract_reminder_title(text):
 
     title = text.strip()
 
-
     title = re.sub(
-
         r"^\s*"
         r"(please\s+)?"
         r"remind\s+me"
         r"(\s+to)?\s*",
-
         "",
-
         title,
-
         flags=re.IGNORECASE
-
     )
 
-
     title = re.sub(
-
         r"^\s*"
         r"(please\s+)?"
         r"(add|create|set)"
         r"\s+(a\s+)?"
         r"reminder"
         r"\s*(to\s+)?",
-
         "",
-
         title,
-
         flags=re.IGNORECASE
-
     )
 
-
     title = re.sub(
-
         r"\b"
         r"(1[0-2]|[1-9])"
         r"(?:[:.]([0-5]\d))?"
         r"\s*"
         r"(am|pm)"
         r"\b",
-
         "",
-
         title,
-
         flags=re.IGNORECASE
-
     )
 
-
     title = re.sub(
-
         r"\b"
         r"(1[0-2]|[1-9])"
         r"\s*"
@@ -2319,18 +1810,12 @@ def extract_reminder_title(
         r"\s*"
         r"(am|pm)?"
         r"\b",
-
         "",
-
         title,
-
         flags=re.IGNORECASE
-
     )
 
-
     title = re.sub(
-
         r"\b("
         r"today|"
         r"tomorrow|"
@@ -2340,70 +1825,43 @@ def extract_reminder_title(
         r"afternoon|"
         r"evening"
         r")\b",
-
         "",
-
         title,
-
         flags=re.IGNORECASE
-
     )
-
 
     month_names = "|".join(
-
-        re.escape(
-            value
-        )
-
+        re.escape(value)
         for value in MONTHS.keys()
-
     )
 
-
     title = re.sub(
-
         r"\b("
         + month_names
         + r")\s+"
         r"\d{1,2}"
         r"(?:st|nd|rd|th)?"
         r"(?:\s+\d{4})?\b",
-
         "",
-
         title,
-
         flags=re.IGNORECASE
-
     )
 
-
     title = re.sub(
-
         r"\s{2,}",
-
         " ",
-
         title
-
     ).strip(
         " .,!?-"
     )
 
-
     if not title:
-
         title = "Reminder"
 
-
     return (
-
         title[:1].upper()
-
         +
         title[1:]
-
     )
 
 
@@ -2426,14 +1884,12 @@ def chat():
         silent=True
     ) or {}
 
-
     message = str(
         data.get(
             "message",
             ""
         )
     ).strip()
-
 
     mode = str(
         data.get(
@@ -2442,47 +1898,37 @@ def chat():
         )
     ).strip().lower()
 
-
     if not message:
 
         return jsonify({
 
-            "success":
-                False,
+            "success": False,
 
-            "created":
-                False,
+            "created": False,
 
             "reply":
                 "Please type a message."
 
         }), 400
 
-
     try:
 
         lower = message.lower()
-
 
         # ====================================================
         # BIRTHDAY
         # ====================================================
 
         is_birthday = (
-
             mode == "birthday"
-
             or
-
             bool(
                 re.search(
                     r"\b(birthday|bday)\b",
                     lower
                 )
             )
-
         )
-
 
         if is_birthday:
 
@@ -2490,24 +1936,19 @@ def chat():
                 message
             )
 
-
             birthday_date = extract_date(
                 message
             )
-
 
             if not name:
 
                 return jsonify({
 
-                    "success":
-                        False,
+                    "success": False,
 
-                    "created":
-                        False,
+                    "created": False,
 
-                    "type":
-                        "birthday",
+                    "type": "birthday",
 
                     "reply":
                         (
@@ -2520,19 +1961,15 @@ def chat():
 
                 })
 
-
             if not birthday_date:
 
                 return jsonify({
 
-                    "success":
-                        False,
+                    "success": False,
 
-                    "created":
-                        False,
+                    "created": False,
 
-                    "type":
-                        "birthday",
+                    "type": "birthday",
 
                     "reply":
                         (
@@ -2546,83 +1983,54 @@ def chat():
 
                 })
 
-
             birthday = (
-
                 Birthday.query
-
                 .filter_by(
-
                     user_id=current_user.id,
-
                     name=name
-
                 )
-
                 .first()
-
             )
-
 
             if birthday:
 
                 reset_alarms_for_birthday(
-
                     birthday.id,
-
                     current_user.id
-
                 )
-
 
                 birthday.birthday = (
                     birthday_date
                 )
 
-
                 action = "updated"
-
 
             else:
 
                 birthday = Birthday(
-
                     user_id=current_user.id,
-
                     name=name,
-
                     birthday=birthday_date,
-
                     phone=None,
-
                     relationship=None,
-
                     notes="Created through chat."
-
                 )
-
 
                 db.session.add(
                     birthday
                 )
 
-
                 action = "added"
-
 
             db.session.commit()
 
-
             return jsonify({
 
-                "success":
-                    True,
+                "success": True,
 
-                "created":
-                    True,
+                "created": True,
 
-                "type":
-                    "birthday",
+                "type": "birthday",
 
                 "birthday": {
 
@@ -2634,7 +2042,6 @@ def chat():
 
                     "date":
                         birthday.birthday.isoformat()
-
                 },
 
                 "reply":
@@ -2645,20 +2052,15 @@ def chat():
                         f"📅 "
                         f"{birthday_date.strftime('%d %B %Y')}"
                     )
-
             })
-
 
         # ====================================================
         # TIME REMINDER
         # ====================================================
 
         reminder_mode = (
-
             mode == "reminder"
-
             or
-
             bool(
                 re.search(
                     r"\b("
@@ -2668,19 +2070,12 @@ def chat():
                     r"schedule|"
                     r"remember"
                     r")\b",
-
                     lower
                 )
             )
-
             or
-
-            extract_time(
-                message
-            ) is not None
-
+            extract_time(message) is not None
         )
-
 
         if reminder_mode:
 
@@ -2688,19 +2083,15 @@ def chat():
                 message
             )
 
-
             if not reminder_time:
 
                 return jsonify({
 
-                    "success":
-                        False,
+                    "success": False,
 
-                    "created":
-                        False,
+                    "created": False,
 
-                    "type":
-                        "reminder",
+                    "type": "reminder",
 
                     "reply":
                         (
@@ -2714,28 +2105,20 @@ def chat():
 
                 })
 
-
             reminder_date = extract_date(
                 message
             )
-
 
             if not reminder_date:
 
                 reminder_date = india_today()
 
-
                 now = india_now()
 
-
                 scheduled = datetime.combine(
-
                     reminder_date,
-
                     reminder_time
-
                 )
-
 
                 if scheduled <= now:
 
@@ -2743,57 +2126,34 @@ def chat():
                         timedelta(days=1)
                     )
 
-
             title = extract_reminder_title(
                 message
             )
 
-
             reminder = Reminder(
-
                 user_id=current_user.id,
-
                 title=title,
-
-                description=(
-                    "Created through chat."
-                ),
-
+                description="Created through chat.",
                 place=None,
-
-                reminder_date=(
-                    reminder_date
-                ),
-
-                reminder_time=(
-                    reminder_time
-                ),
-
+                reminder_date=reminder_date,
+                reminder_time=reminder_time,
                 status="pending",
-
                 reminder_type="chat"
-
             )
-
 
             db.session.add(
                 reminder
             )
 
-
             db.session.commit()
-
 
             return jsonify({
 
-                "success":
-                    True,
+                "success": True,
 
-                "created":
-                    True,
+                "created": True,
 
-                "type":
-                    "reminder",
+                "type": "reminder",
 
                 "reminder": {
 
@@ -2810,7 +2170,6 @@ def chat():
                         reminder.reminder_time.strftime(
                             "%H:%M"
                         )
-
                 },
 
                 "reply":
@@ -2823,9 +2182,7 @@ def chat():
                         f"🕐 "
                         f"{reminder_time.strftime('%I:%M %p')}"
                     )
-
             })
-
 
         # ====================================================
         # UNKNOWN
@@ -2833,14 +2190,11 @@ def chat():
 
         return jsonify({
 
-            "success":
-                True,
+            "success": True,
 
-            "created":
-                False,
+            "created": False,
 
-            "type":
-                "unknown",
+            "type": "unknown",
 
             "reply":
                 (
@@ -2851,28 +2205,22 @@ def chat():
                     "🎂 Arun's birthday is "
                     "August 25"
                 )
-
         })
-
 
     except Exception as error:
 
         db.session.rollback()
-
 
         print(
             "CHAT ERROR:",
             repr(error)
         )
 
-
         return jsonify({
 
-            "success":
-                False,
+            "success": False,
 
-            "created":
-                False,
+            "created": False,
 
             "reply":
                 (
@@ -2886,65 +2234,42 @@ def chat():
 # ============================================================
 # OLD DUE REMINDERS API
 #
-# KEPT FOR BACKWARD COMPATIBILITY.
+# Kept for backward compatibility.
 # ============================================================
 
-@app.route(
-    "/api/due-reminders"
-)
+@app.route("/api/due-reminders")
 @login_required
 def due_reminders():
 
     now = india_now()
 
-
     reminders = (
-
         Reminder.query
-
         .filter_by(
-
             user_id=current_user.id,
-
             status="pending"
-
         )
-
         .filter(
-
             Reminder.reminder_date
             <= now.date()
-
         )
-
         .all()
-
     )
 
-
     due = []
-
 
     for reminder in reminders:
 
         if not reminder.reminder_date:
-
             continue
-
 
         if not reminder.reminder_time:
-
             continue
 
-
         scheduled = datetime.combine(
-
             reminder.reminder_date,
-
             reminder.reminder_time
-
         )
-
 
         if scheduled <= now:
 
@@ -2968,18 +2293,13 @@ def due_reminders():
                     reminder.reminder_time.strftime(
                         "%I:%M %p"
                     )
-
             })
-
 
     return jsonify({
 
-        "success":
-            True,
+        "success": True,
 
-        "reminders":
-            due
-
+        "reminders": due
     })
 
 
@@ -2987,60 +2307,38 @@ def due_reminders():
 # UPCOMING BIRTHDAYS
 # ============================================================
 
-@app.route(
-    "/api/upcoming-birthdays"
-)
+@app.route("/api/upcoming-birthdays")
 @login_required
 def upcoming_birthdays():
 
     today = india_today()
 
-
     birthday_list = (
-
         Birthday.query
-
         .filter_by(
             user_id=current_user.id
         )
-
         .all()
-
     )
 
-
     result = []
-
 
     for birthday in birthday_list:
 
         if not birthday.birthday:
-
             continue
 
+        month = birthday.birthday.month
 
-        month = (
-            birthday.birthday.month
-        )
-
-
-        day = (
-            birthday.birthday.day
-        )
-
+        day = birthday.birthday.day
 
         try:
 
             next_birthday = date(
-
                 today.year,
-
                 month,
-
                 day
-
             )
-
 
         except ValueError:
 
@@ -3051,34 +2349,24 @@ def upcoming_birthdays():
             ):
 
                 next_birthday = date(
-
                     today.year,
-
                     2,
-
                     28
-
                 )
 
             else:
 
                 continue
 
-
         if next_birthday < today:
 
             try:
 
                 next_birthday = date(
-
                     today.year + 1,
-
                     month,
-
                     day
-
                 )
-
 
             except ValueError:
 
@@ -3089,66 +2377,43 @@ def upcoming_birthdays():
                 ):
 
                     next_birthday = date(
-
                         today.year + 1,
-
                         2,
-
                         28
-
                     )
 
                 else:
 
                     continue
 
-
         days = (
-
             next_birthday
             -
             today
-
         ).days
 
-
-        if (
-            0
-            <=
-            days
-            <=
-            5
-        ):
+        if 0 <= days <= 5:
 
             if days == 0:
 
                 message = (
-
                     f"🎉 Today is "
                     f"{birthday.name}'s birthday!"
-
                 )
-
 
             elif days == 1:
 
                 message = (
-
                     f"🎂 {birthday.name}'s "
                     "birthday is tomorrow!"
-
                 )
-
 
             else:
 
                 message = (
-
                     f"🎂 {birthday.name}'s "
                     f"birthday is in {days} days!"
-
                 )
-
 
             result.append({
 
@@ -3171,26 +2436,18 @@ def upcoming_birthdays():
 
                 "message":
                     message
-
             })
 
-
     result.sort(
-
         key=lambda x:
-            x["days_remaining"]
-
+        x["days_remaining"]
     )
-
 
     return jsonify({
 
-        "success":
-            True,
+        "success": True,
 
-        "birthdays":
-            result
-
+        "birthdays": result
     })
 
 
@@ -3198,64 +2455,37 @@ def upcoming_birthdays():
 # HISTORY
 # ============================================================
 
-@app.route(
-    "/history"
-)
+@app.route("/history")
 @login_required
 def history():
 
     reminders_history = (
-
         Reminder.query
-
         .filter_by(
-
             user_id=current_user.id
-
         )
-
         .order_by(
-
             Reminder.reminder_date.desc(),
-
             Reminder.reminder_time.desc()
-
         )
-
         .all()
-
     )
-
 
     birthdays_history = (
-
         Birthday.query
-
         .filter_by(
-
             user_id=current_user.id
-
         )
-
         .order_by(
-
             Birthday.birthday.desc()
-
         )
-
         .all()
-
     )
 
-
     return render_template(
-
         "history.html",
-
         reminders=reminders_history,
-
         birthdays=birthdays_history
-
     )
 
 
@@ -3263,28 +2493,41 @@ def history():
 # SETTINGS
 # ============================================================
 
-@app.route(
-    "/settings"
-)
+@app.route("/settings")
 @login_required
 def settings():
 
     return render_template(
-
         "settings.html",
-
         user=current_user
-
     )
 
 
 # ============================================================
 # DATABASE INITIALIZATION
 # ============================================================
+#
+# This is safe for both:
+#
+# Local SQLite
+# and
+# TiDB Cloud
+#
+# Existing tables/data are NOT deleted.
+# ============================================================
 
 with app.app_context():
 
-    db.create_all()
+    try:
+
+        db.create_all()
+
+    except Exception as error:
+
+        print(
+            "DATABASE INITIALIZATION ERROR:",
+            repr(error)
+        )
 
 
 # ============================================================
@@ -3293,10 +2536,16 @@ with app.app_context():
 
 if __name__ == "__main__":
 
+    port = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
+    )
+
     app.run(
-
+        host="0.0.0.0",
+        port=port,
         debug=True,
-
         use_reloader=False
-
     )
