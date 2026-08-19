@@ -354,6 +354,10 @@ def register():
             ""
         )
 
+        # ----------------------------------------------------
+        # VALIDATION
+        # ----------------------------------------------------
+
         if (
             not name
             or
@@ -371,13 +375,35 @@ def register():
                 url_for("register")
             )
 
-        existing = (
-            User.query
-            .filter_by(
-                email=email
+        # ----------------------------------------------------
+        # CHECK EXISTING USER
+        # ----------------------------------------------------
+
+        try:
+
+            existing = (
+                User.query
+                .filter_by(
+                    email=email
+                )
+                .first()
             )
-            .first()
-        )
+
+        except Exception as error:
+
+            app.logger.exception(
+                "REGISTER USER LOOKUP ERROR: %s",
+                error
+            )
+
+            flash(
+                "Unable to check the account right now.",
+                "error"
+            )
+
+            return redirect(
+                url_for("register")
+            )
 
         if existing:
 
@@ -390,29 +416,26 @@ def register():
                 url_for("register")
             )
 
-        password_hash = (
-            bcrypt
-            .generate_password_hash(
-                password
-            )
-            .decode("utf-8")
-        )
-
-        user = User(
-            name=name,
-            email=email,
-            password_hash=password_hash
-        )
+        # ----------------------------------------------------
+        # CREATE PASSWORD HASH
+        # ----------------------------------------------------
 
         try:
 
-            db.session.add(user)
+            password_hash = (
+                bcrypt
+                .generate_password_hash(
+                    password
+                )
+                .decode("utf-8")
+            )
 
-            db.session.commit()
+        except Exception as error:
 
-        except Exception:
-
-            db.session.rollback()
+            app.logger.exception(
+                "PASSWORD HASH ERROR: %s",
+                error
+            )
 
             flash(
                 "Unable to create the account right now.",
@@ -422,6 +445,59 @@ def register():
             return redirect(
                 url_for("register")
             )
+
+        # ----------------------------------------------------
+        # CREATE USER
+        # ----------------------------------------------------
+
+        user = User(
+            name=name,
+            email=email,
+            password_hash=password_hash
+        )
+
+        # ----------------------------------------------------
+        # SAVE TO DATABASE
+        # ----------------------------------------------------
+
+        try:
+
+            db.session.add(user)
+
+            db.session.commit()
+
+            # Force SQLAlchemy to obtain the
+            # newly generated database ID.
+            db.session.refresh(user)
+
+            app.logger.info(
+                "REGISTER SUCCESS: "
+                "user_id=%s email=%s",
+                user.id,
+                user.email
+            )
+
+        except Exception as error:
+
+            db.session.rollback()
+
+            app.logger.exception(
+                "REGISTER DATABASE ERROR: %s",
+                error
+            )
+
+            flash(
+                "Unable to create the account right now.",
+                "error"
+            )
+
+            return redirect(
+                url_for("register")
+            )
+
+        # ----------------------------------------------------
+        # LOGIN NEW USER
+        # ----------------------------------------------------
 
         login_user(user)
 
@@ -433,6 +509,10 @@ def register():
         return redirect(
             url_for("home")
         )
+
+    # --------------------------------------------------------
+    # GET REGISTER PAGE
+    # --------------------------------------------------------
 
     return render_template(
         "register.html"
