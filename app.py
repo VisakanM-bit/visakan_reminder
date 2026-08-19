@@ -466,6 +466,7 @@ def register():
 
             db.session.commit()
 
+            # Force SQLAlchemy to obtain the generated ID.
             db.session.refresh(user)
 
             app.logger.info(
@@ -524,30 +525,6 @@ def register():
     )
 
 
-# LOGIN NEW USER
-        # ----------------------------------------------------
-
-        login_user(user)
-
-        flash(
-            "Account created successfully!",
-            "success"
-        )
-
-        return redirect(
-            url_for("home")
-        )
-
-    # --------------------------------------------------------
-    # GET REGISTER PAGE
-    # --------------------------------------------------------
-
-    return render_template(
-        "register.html"
-    )
-
-
-# ============================================================
 # LOGIN
 # ============================================================
 
