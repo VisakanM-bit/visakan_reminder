@@ -446,6 +446,36 @@ def register():
                 url_for("register")
             )
 
+    db.session.refresh(user)
+
+    app.logger.info(
+        "REGISTER SUCCESS - USER ID: %s - EMAIL: %s",
+        user.id,
+        user.email
+    )
+
+    app.logger.info(
+        "DATABASE USED BY RENDER: %s",
+        db.engine.url.render_as_string(hide_password=True)
+    )
+
+except Exception as error:
+
+    db.session.rollback()
+
+    app.logger.exception(
+        "REGISTER DATABASE ERROR: %s",
+        error
+    )
+
+    flash(
+        "Unable to create the account right now.",
+        "error"
+    )
+
+    return redirect(
+        url_for("register")
+    )
         # ----------------------------------------------------
         # CREATE USER
         # ----------------------------------------------------
@@ -457,7 +487,7 @@ def register():
         )
 
         # ----------------------------------------------------
-        # SAVE USER TO DATABASE
+        # SAVE TO DATABASE
         # ----------------------------------------------------
 
         try:
@@ -466,21 +496,15 @@ def register():
 
             db.session.commit()
 
-            # Force SQLAlchemy to obtain the generated ID.
+            # Force SQLAlchemy to obtain the
+            # newly generated database ID.
             db.session.refresh(user)
 
             app.logger.info(
-                "REGISTER SUCCESS - USER ID: %s - EMAIL: %s",
+                "REGISTER SUCCESS: "
+                "user_id=%s email=%s",
                 user.id,
                 user.email
-            )
-
-            # Password is hidden from this log.
-            app.logger.info(
-                "DATABASE USED BY RENDER: %s",
-                db.engine.url.render_as_string(
-                    hide_password=True
-                )
             )
 
         except Exception as error:
@@ -501,7 +525,6 @@ def register():
                 url_for("register")
             )
 
-
         # ----------------------------------------------------
         # LOGIN NEW USER
         # ----------------------------------------------------
@@ -516,6 +539,14 @@ def register():
         return redirect(
             url_for("home")
         )
+
+    # --------------------------------------------------------
+    # GET REGISTER PAGE
+    # --------------------------------------------------------
+
+    return render_template(
+        "register.html"
+    )
 
 
 # ============================================================
@@ -677,11 +708,11 @@ def add_birthday():
             ""
         ).strip()
 
-        # ----------------------------------------------------
-        # VALIDATION
-        # ----------------------------------------------------
-
-        if not name or not birthday_value:
+        if (
+            not name
+            or
+            not birthday_value
+        ):
 
             flash(
                 "Name and birthday are required.",
@@ -692,10 +723,6 @@ def add_birthday():
                 url_for("add_birthday")
             )
 
-        # ----------------------------------------------------
-        # CONVERT DATE
-        # ----------------------------------------------------
-
         try:
 
             birthday_date = datetime.strptime(
@@ -703,12 +730,7 @@ def add_birthday():
                 "%Y-%m-%d"
             ).date()
 
-        except ValueError as error:
-
-            app.logger.exception(
-                "BIRTHDAY DATE ERROR: %s",
-                error
-            )
+        except ValueError:
 
             flash(
                 "Invalid birthday date.",
@@ -719,10 +741,6 @@ def add_birthday():
                 url_for("add_birthday")
             )
 
-        # ----------------------------------------------------
-        # CREATE BIRTHDAY OBJECT
-        # ----------------------------------------------------
-
         birthday = Birthday(
             user_id=current_user.id,
             name=name,
@@ -732,139 +750,18 @@ def add_birthday():
             notes=notes or None
         )
 
-        # ----------------------------------------------------
-        # SAVE TO DATABASE
-        # ----------------------------------------------------
-
         try:
 
-            app.logger.info(
-                "========================================"
-            )
-
-            app.logger.info(
-                "ADDING NEW BIRTHDAY"
-            )
-
-            app.logger.info(
-                "User ID: %s",
-                current_user.id
-            )
-
-            app.logger.info(
-                "Name: %s",
-                name
-            )
-
-            app.logger.info(
-                "Birthday: %s",
-                birthday_date
-            )
-
-            # Show the database being used without
-            # exposing the database password.
-            app.logger.info(
-                "DATABASE: %s",
-                db.engine.url.render_as_string(
-                    hide_password=True
-                )
-            )
-
-            # Add object to current transaction.
             db.session.add(birthday)
 
-            # Force SQLAlchemy to execute the INSERT.
-            # This lets us see database errors before commit.
-            db.session.flush()
-
-            app.logger.info(
-                "INSERT FLUSHED - temporary ID: %s",
-                birthday.id
-            )
-
-            # Permanently save the row.
             db.session.commit()
 
-            app.logger.info(
-                "COMMIT SUCCESS - Birthday ID: %s",
-                birthday.id
-            )
-
-            # ------------------------------------------------
-            # VERIFY AFTER COMMIT
-            # ------------------------------------------------
-
-            saved_birthday = db.session.get(
-                Birthday,
-                birthday.id
-            )
-
-            if saved_birthday is None:
-
-                app.logger.error(
-                    "CRITICAL: Birthday disappeared after commit!"
-                )
-
-                flash(
-                    "Birthday could not be verified in the database.",
-                    "error"
-                )
-
-                return redirect(
-                    url_for("birthdays")
-                )
-
-            app.logger.info(
-                "DATABASE VERIFICATION SUCCESS"
-            )
-
-            app.logger.info(
-                "Saved ID: %s",
-                saved_birthday.id
-            )
-
-            app.logger.info(
-                "Saved User ID: %s",
-                saved_birthday.user_id
-            )
-
-            app.logger.info(
-                "Saved Name: %s",
-                saved_birthday.name
-            )
-
-            app.logger.info(
-                "Saved Birthday: %s",
-                saved_birthday.birthday
-            )
-
-            app.logger.info(
-                "========================================"
-            )
-
-        except Exception as error:
+        except Exception:
 
             db.session.rollback()
 
-            app.logger.exception(
-                "========================================"
-            )
-
-            app.logger.exception(
-                "BIRTHDAY DATABASE INSERT FAILED"
-            )
-
-            app.logger.exception(
-                "ERROR: %s",
-                error
-            )
-
-            app.logger.exception(
-                "========================================"
-            )
-
             flash(
-                "Unable to save birthday. Check Render logs.",
+                "Unable to save birthday.",
                 "error"
             )
 
@@ -872,12 +769,8 @@ def add_birthday():
                 url_for("add_birthday")
             )
 
-        # ----------------------------------------------------
-        # SUCCESS
-        # ----------------------------------------------------
-
         flash(
-            f"{name}'s birthday was added successfully!",
+            f"{name}'s birthday was added!",
             "success"
         )
 
