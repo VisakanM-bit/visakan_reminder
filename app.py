@@ -180,6 +180,14 @@ PERMANENT_USER_ID = int(
     )
 )
 
+# The application has exactly one permanent account.
+# The email is the stable identifier; the numeric ID is retained as a
+# compatibility/fallback value for existing records.
+PERMANENT_USER_EMAIL = os.environ.get(
+    "PERMANENT_USER_EMAIL",
+    "visakan2005smr@gmail.com"
+)
+
 
 # ============================================================
 # LOGIN MANAGER
@@ -247,10 +255,22 @@ def force_permanent_user():
 
     try:
 
-        permanent_user = db.session.get(
-            User,
-            PERMANENT_USER_ID
+        # Resolve the permanent account by email first, with User ID 1
+        # as a compatibility fallback.
+        permanent_user = (
+            User.query
+            .filter(
+                db.func.lower(User.email)
+                == PERMANENT_USER_EMAIL.lower()
+            )
+            .first()
         )
+
+        if permanent_user is None:
+            permanent_user = db.session.get(
+                User,
+                PERMANENT_USER_ID
+            )
 
 
     except Exception as error:
@@ -309,7 +329,7 @@ def force_permanent_user():
     if (
         not current_user.is_authenticated
         or
-        current_user.id != PERMANENT_USER_ID
+        current_user.id != permanent_user.id
     ):
 
         login_user(
@@ -327,18 +347,79 @@ def force_permanent_user():
 
 def permanent_user():
 
-    user = db.session.get(
-        User,
-        PERMANENT_USER_ID
+    # Prefer the stable permanent email address. This avoids depending on
+    # an auto-generated PostgreSQL ID if the database is ever restored.
+    user = (
+        User.query
+        .filter(
+            db.func.lower(User.email)
+            == PERMANENT_USER_EMAIL.lower()
+        )
+        .first()
     )
 
+    # Backward-compatible fallback for the migrated User ID 1.
     if user is None:
+        user = db.session.get(
+            User,
+            PERMANENT_USER_ID
+        )
 
+    if user is None:
         raise RuntimeError(
             "Permanent user does not exist."
         )
 
     return user
+
+
+# ============================================================
+# DATABASE HEALTH CHECK
+# ============================================================
+#
+# This endpoint is intentionally simple and does not expose credentials.
+# It confirms which database the running Render process is actually using.
+# ============================================================
+
+@app.route("/api/database-health")
+def database_health():
+
+    try:
+        user = permanent_user()
+
+        birthday_count = (
+            Birthday.query
+            .filter_by(user_id=user.id)
+            .count()
+        )
+
+        reminder_count = (
+            Reminder.query
+            .filter_by(user_id=user.id)
+            .count()
+        )
+
+        return jsonify({
+            "success": True,
+            "database": db.engine.url.render_as_string(
+                hide_password=True
+            ),
+            "user_id": user.id,
+            "email": user.email,
+            "birthday_count": birthday_count,
+            "reminder_count": reminder_count
+        })
+
+    except Exception as error:
+        db.session.rollback()
+        app.logger.exception(
+            "DATABASE HEALTH CHECK FAILED: %s",
+            error
+        )
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500
 
 
 # ============================================================
