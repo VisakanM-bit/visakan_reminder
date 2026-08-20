@@ -313,7 +313,7 @@ def force_permanent_user():
 
                 "error":
                     (
-                        "Permanent application account "
+                        "Permanent  account "
                         "does not exist in the database."
                     )
 
