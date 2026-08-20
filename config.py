@@ -1,4 +1,5 @@
 import os
+
 from pathlib import Path
 
 
@@ -27,59 +28,40 @@ class Config:
 
     # --------------------------------------------------------
     # DATABASE
+    # --------------------------------------------------------
     #
-    # PRODUCTION / RENDER:
-    #   Uses DATABASE_URL from Render Environment Variables
+    # Render:
+    #   DATABASE_URL → Supabase PostgreSQL
     #
-    # LOCAL:
-    #   Falls back to SQLite
+    # Local:
+    #   SQLite fallback
     #
-    # For TiDB Cloud Starter, DATABASE_URL should contain:
-    #
-    # mysql+pymysql://USERNAME:PASSWORD@HOST:4000/DATABASE
-    # ?ssl_verify_cert=true&ssl_verify_identity=true
     # --------------------------------------------------------
 
-    DATABASE_URL = os.environ.get("DATABASE_URL")
+    DATABASE_URL = os.environ.get(
+        "DATABASE_URL"
+    )
 
 
     if DATABASE_URL:
 
-        # ----------------------------------------------------
-        # TiDB Cloud Starter TLS
-        #
-        # TiDB requires TLS for public connections.
-        # Add the required SSL parameters automatically
-        # if they are not already present.
-        # ----------------------------------------------------
-
         if DATABASE_URL.startswith(
-            "mysql+pymysql://"
+            "postgresql://"
         ):
 
-            if "ssl_verify_cert=" not in DATABASE_URL:
-
-                separator = (
-                    "&"
-                    if "?" in DATABASE_URL
-                    else "?"
-                )
-
-                DATABASE_URL += (
-                    separator
-                    + "ssl_verify_cert=true"
-                    + "&ssl_verify_identity=true"
-                )
+            DATABASE_URL = DATABASE_URL.replace(
+                "postgresql://",
+                "postgresql+psycopg2://",
+                1
+            )
 
 
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+        SQLALCHEMY_DATABASE_URI = (
+            DATABASE_URL
+        )
 
 
     else:
-
-        # ----------------------------------------------------
-        # LOCAL DEVELOPMENT
-        # ----------------------------------------------------
 
         SQLALCHEMY_DATABASE_URI = (
             f"sqlite:///{BASE_DIR / 'bday_reminder.db'}"
@@ -93,13 +75,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
-    # --------------------------------------------------------
-    # SQLALCHEMY ENGINE OPTIONS
-    # --------------------------------------------------------
-
     SQLALCHEMY_ENGINE_OPTIONS = {
 
-        "pool_pre_ping": True,
+        "pool_pre_ping": True
 
     }
 
@@ -121,21 +99,22 @@ class Config:
 
 
     # --------------------------------------------------------
-    # SESSION COOKIE SECURITY
-    #
-    # Local:
-    #   HTTP is allowed
-    #
-    # Render:
-    #   Set SESSION_COOKIE_SECURE=1
+    # RENDER / HTTPS
     # --------------------------------------------------------
 
     SESSION_COOKIE_SECURE = (
+
         os.environ.get(
             "SESSION_COOKIE_SECURE",
             "0"
         ).lower()
-        in ("1", "true", "yes")
+
+        in (
+            "1",
+            "true",
+            "yes"
+        )
+
     )
 
 
