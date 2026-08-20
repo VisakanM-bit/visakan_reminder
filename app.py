@@ -251,7 +251,28 @@ def force_permanent_user():
     if request.endpoint == "static":
 
         return None
+        app.logger.info(
+        "DATABASE URL: %s",
+        db.engine.url.render_as_string(hide_password=True)
+    )
 
+    app.logger.info(
+        "USER COUNT: %s",
+        User.query.count()
+    )
+
+    app.logger.info(
+        "USER 1: %s",
+        db.session.get(User, 1)
+    )
+
+    app.logger.info(
+        "PERMANENT EMAIL USER: %s",
+        User.query.filter(
+            db.func.lower(User.email)
+            == PERMANENT_USER_EMAIL.lower()
+        ).first()
+    )
 
     try:
 
