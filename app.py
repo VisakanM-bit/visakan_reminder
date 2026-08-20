@@ -244,12 +244,12 @@ def load_user(user_id):
 @app.before_request
 def force_permanent_user():
 
-    # --------------------------------------------------------
-    # Do not interfere with static files.
-    # --------------------------------------------------------
-
-    if request.endpoint == "static":
-
+    # These endpoints must be accessible before the
+    # permanent-account check so we can diagnose the database.
+    if request.endpoint in (
+        "static",
+        "database_health"
+    ):
         return None
         app.logger.info(
         "DATABASE URL: %s",
@@ -406,42 +406,102 @@ def permanent_user():
 def database_health():
 
     try:
-        user = permanent_user()
+        # Direct database test.
+        total_users = User.query.count()
 
-        birthday_count = (
-            Birthday.query
-            .filter_by(user_id=user.id)
-            .count()
+        user_by_id = db.session.get(
+            User,
+            PERMANENT_USER_ID
         )
 
-        reminder_count = (
-            Reminder.query
-            .filter_by(user_id=user.id)
-            .count()
+        user_by_email = (
+            User.query
+            .filter(
+                db.func.lower(User.email)
+                == PERMANENT_USER_EMAIL.lower()
+            )
+            .first()
         )
+
+        birthday_count = 0
+        reminder_count = 0
+
+        if user_by_email:
+            birthday_count = (
+                Birthday.query
+                .filter_by(
+                    user_id=user_by_email.id
+                )
+                .count()
+            )
+
+            reminder_count = (
+                Reminder.query
+                .filter_by(
+                    user_id=user_by_email.id
+                )
+                .count()
+            )
 
         return jsonify({
             "success": True,
+
             "database": db.engine.url.render_as_string(
                 hide_password=True
             ),
-            "user_id": user.id,
-            "email": user.email,
+
+            "total_users": total_users,
+
+            "user_id_1_exists": (
+                user_by_id is not None
+            ),
+
+            "user_id_1": (
+                user_by_id.id
+                if user_by_id
+                else None
+            ),
+
+            "user_id_1_email": (
+                user_by_id.email
+                if user_by_id
+                else None
+            ),
+
+            "email_user_exists": (
+                user_by_email is not None
+            ),
+
+            "email_user_id": (
+                user_by_email.id
+                if user_by_email
+                else None
+            ),
+
+            "email_user": (
+                user_by_email.email
+                if user_by_email
+                else None
+            ),
+
             "birthday_count": birthday_count,
+
             "reminder_count": reminder_count
         })
 
     except Exception as error:
+
         db.session.rollback()
+
         app.logger.exception(
             "DATABASE HEALTH CHECK FAILED: %s",
             error
         )
+
         return jsonify({
             "success": False,
             "error": str(error)
         }), 500
-
 
 # ============================================================
 # DASHBOARD
