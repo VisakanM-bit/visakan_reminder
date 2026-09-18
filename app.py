@@ -82,7 +82,11 @@ from notification_service import (
     reset_alarms_for_reminder,
     reset_alarms_for_birthday
 )
+# ============================================================
+# BACKGROUND PUSH SCHEDULER
+# ============================================================
 
+from scheduler import start_scheduler
 
 # ============================================================
 # APPLICATION SETUP
@@ -3368,7 +3372,26 @@ with app.app_context():
             "DATABASE INITIALIZATION ERROR: %s",
             error
         )
+# ============================================================
+# START BACKGROUND PUSH SCHEDULER
+# ============================================================
 
+try:
+
+    reminder_scheduler = start_scheduler(
+        app
+    )
+
+    app.logger.info(
+        "✅ Background push scheduler started."
+    )
+
+except Exception as error:
+
+    app.logger.exception(
+        "❌ Failed to start background push scheduler: %s",
+        error
+    )
 
 # ============================================================
 # RUN
