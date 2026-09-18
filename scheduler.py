@@ -1,68 +1,49 @@
-from datetime import datetime
+# ============================================================
+# BDAY REMINDER
+# BACKGROUND REMINDER SCHEDULER
+# ============================================================
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from database import db
-from database.models import Reminder
+from notification_service import send_due_push_notifications
 
 
 # ============================================================
-# CHECK REMINDERS
+# CHECK REMINDERS / SEND WEB PUSH
 # ============================================================
 
 def check_reminders(app):
 
     with app.app_context():
 
-        now = datetime.now()
+        print(
+            "⏰ Checking reminders and push notifications..."
+        )
 
-        reminders = Reminder.query.filter(
-            Reminder.status == "pending",
-            Reminder.reminder_date <= now.date()
-        ).all()
+        try:
 
+            # ------------------------------------------------
+            # Send Web Push notifications
+            #
+            # This works independently of whether the PWA
+            # is currently open.
+            # ------------------------------------------------
 
-        for reminder in reminders:
+            send_due_push_notifications()
 
-            reminder_datetime = datetime.combine(
-                reminder.reminder_date,
-                reminder.reminder_time
+            print(
+                "✅ Push notification check completed."
             )
 
+        except Exception as error:
 
-            if reminder_datetime <= now:
+            print(
+                "❌ Scheduler error:"
+            )
 
-                print(
-                    "🔔 DUE REMINDER"
-                )
-
-                print(
-                    f"   ID: {reminder.id}"
-                )
-
-                print(
-                    f"   Title: {reminder.title}"
-                )
-
-                print(
-                    f"   Date: {reminder.reminder_date}"
-                )
-
-                print(
-                    f"   Time: {reminder.reminder_time}"
-                )
-
-                # IMPORTANT:
-                #
-                # We do NOT mark it completed here.
-                #
-                # The browser notification appears first.
-                #
-                # User clicks "Done"
-                #       ↓
-                # /api/reminders/<id>/complete
-                #       ↓
-                # MySQL status = completed
+            print(
+                f"   {error}"
+            )
 
 
 # ============================================================
@@ -74,7 +55,6 @@ def start_scheduler(app):
     scheduler = BackgroundScheduler(
         timezone="Asia/Kolkata"
     )
-
 
     scheduler.add_job(
         func=check_reminders,
@@ -94,13 +74,14 @@ def start_scheduler(app):
         coalesce=True
     )
 
-
     scheduler.start()
-
 
     print(
         "⏰ Reminder scheduler started."
     )
 
+    print(
+        "📱 Web Push background notifications enabled."
+    )
 
     return scheduler
