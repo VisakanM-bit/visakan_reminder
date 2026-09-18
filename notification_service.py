@@ -3,15 +3,24 @@
 # PERSISTENT NOTIFICATION / ALARM SERVICE
 # ============================================================
 
+import json
+import os
+
 from datetime import datetime, date, time, timedelta
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy import or_
 
+from pywebpush import webpush, WebPushException
+
 from database import db
-from database.models import Birthday, Reminder
+from database.models import (
+    Birthday,
+    Reminder,
+    PushSubscription
+)
 
 
 # ============================================================
@@ -31,14 +40,34 @@ notification_bp = Blueprint(
 IST = ZoneInfo("Asia/Kolkata")
 
 # Birthday model has no time field.
-# Per the agreed specification, use 09:00 AM.
+# Birthday notification starts at 09:00 AM.
 BIRTHDAY_NOTIFICATION_TIME = time(
     9,
     0
 )
 
-# Backend controls the repeat interval.
+# Backend repeat interval.
 REPEAT_MINUTES = 5
+
+
+# ============================================================
+# VAPID SETTINGS
+# ============================================================
+
+VAPID_PUBLIC_KEY = os.environ.get(
+    "VAPID_PUBLIC_KEY",
+    ""
+)
+
+VAPID_PRIVATE_KEY = os.environ.get(
+    "VAPID_PRIVATE_KEY",
+    ""
+)
+
+VAPID_CLAIM_EMAIL = os.environ.get(
+    "VAPID_CLAIM_EMAIL",
+    ""
+)
 
 
 # ============================================================
@@ -49,12 +78,10 @@ class NotificationAlarm(db.Model):
 
     __tablename__ = "notification_alarms"
 
-
     id = db.Column(
         db.Integer,
         primary_key=True
     )
-
 
     user_id = db.Column(
         db.Integer,
@@ -63,22 +90,17 @@ class NotificationAlarm(db.Model):
         index=True
     )
 
-
     # reminder / birthday
-
     kind = db.Column(
         db.String(20),
         nullable=False
     )
 
-
     # ID of Reminder or Birthday
-
     source_id = db.Column(
         db.Integer,
         nullable=False
     )
-
 
     # Identifies one occurrence.
     #
@@ -87,21 +109,17 @@ class NotificationAlarm(db.Model):
     #
     # Birthday:
     # birthday:5:2026-08-18
-
     occurrence_key = db.Column(
         db.String(150),
         nullable=False
     )
 
-
     # Alarm lifecycle
-
     active = db.Column(
         db.Boolean,
         nullable=False,
         default=False
     )
-
 
     stopped = db.Column(
         db.Boolean,
@@ -109,20 +127,16 @@ class NotificationAlarm(db.Model):
         default=False
     )
 
-
     # Backend notification timing
-
     last_notified_at = db.Column(
         db.DateTime,
         nullable=True
     )
 
-
     started_at = db.Column(
         db.DateTime,
         nullable=True
     )
-
 
     created_at = db.Column(
         db.DateTime,
@@ -130,9 +144,7 @@ class NotificationAlarm(db.Model):
         default=datetime.utcnow
     )
 
-
     __table_args__ = (
-
         db.UniqueConstraint(
             "user_id",
             "kind",
@@ -140,7 +152,45 @@ class NotificationAlarm(db.Model):
             "occurrence_key",
             name="uq_notification_alarm_occurrence"
         ),
+    )
 
+
+# ============================================================
+# PUSH DELIVERY TRACKING
+# ============================================================
+# Separate table so we do NOT need to modify the existing
+# notification_alarms table.
+#
+# This prevents the scheduler from interfering with the
+# existing in-page notification timing.
+# ============================================================
+
+class PushDelivery(db.Model):
+
+    __tablename__ = "notification_push_deliveries"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    alarm_id = db.Column(
+        db.Integer,
+        db.ForeignKey("notification_alarms.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    last_sent_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
     )
 
 
@@ -181,33 +231,19 @@ def get_or_create_alarm(
         .first()
     )
 
-
     if alarm:
-
         return alarm
 
-
     alarm = NotificationAlarm(
-
         user_id=user_id,
-
         kind=kind,
-
         source_id=source_id,
-
         occurrence_key=occurrence_key,
-
         active=False,
-
         stopped=False
-
     )
 
-
-    db.session.add(
-        alarm
-    )
-
+    db.session.add(alarm)
 
     try:
 
@@ -215,11 +251,9 @@ def get_or_create_alarm(
 
         return alarm
 
-
     except Exception:
 
         db.session.rollback()
-
 
         return (
             NotificationAlarm.query
@@ -236,11 +270,7 @@ def get_or_create_alarm(
 # ============================================================
 # CLAIM NOTIFICATION
 #
-# IMPORTANT:
-# The database decides whether a notification is allowed.
-#
-# Frontend polling frequency does NOT control the 5-minute
-# repeat interval.
+# This controls the existing in-page notification system.
 # ============================================================
 
 def claim_notification(
@@ -253,16 +283,11 @@ def claim_notification(
         alarm_id
     )
 
-
     if not alarm:
-
         return None
-
 
     if alarm.stopped:
-
         return None
-
 
     cutoff = (
         now -
@@ -271,7 +296,6 @@ def claim_notification(
         )
     )
 
-
     # --------------------------------------------------------
     # FIRST NOTIFICATION
     # --------------------------------------------------------
@@ -279,33 +303,21 @@ def claim_notification(
     if not alarm.active:
 
         updated = (
-
             NotificationAlarm.query
-
             .filter(
-                NotificationAlarm.id
-                == alarm_id,
-
+                NotificationAlarm.id == alarm_id,
                 NotificationAlarm.stopped.is_(False),
-
                 NotificationAlarm.active.is_(False)
             )
-
             .update(
-
                 {
                     "active": True,
-
                     "started_at": now,
-
                     "last_notified_at": now
                 },
-
                 synchronize_session=False
             )
-
         )
-
 
     # --------------------------------------------------------
     # REPEAT NOTIFICATION
@@ -314,50 +326,29 @@ def claim_notification(
     else:
 
         updated = (
-
             NotificationAlarm.query
-
             .filter(
-
-                NotificationAlarm.id
-                == alarm_id,
-
+                NotificationAlarm.id == alarm_id,
                 NotificationAlarm.stopped.is_(False),
-
                 NotificationAlarm.active.is_(True),
-
                 or_(
-
-                    NotificationAlarm
-                    .last_notified_at
-                    .is_(None),
-
-                    NotificationAlarm
-                    .last_notified_at
-                    <= cutoff
-
+                    NotificationAlarm.last_notified_at.is_(None),
+                    NotificationAlarm.last_notified_at <= cutoff
                 )
-
             )
-
             .update(
-
                 {
                     "last_notified_at": now
                 },
-
                 synchronize_session=False
             )
-
         )
-
 
     if not updated:
 
         db.session.expire_all()
 
         return None
-
 
     return db.session.get(
         NotificationAlarm,
@@ -375,9 +366,7 @@ def get_next_birthday_date(
 ):
 
     month = birthday.birthday.month
-
     day = birthday.birthday.day
-
 
     try:
 
@@ -387,11 +376,9 @@ def get_next_birthday_date(
             day
         )
 
-
     except ValueError:
 
-        # Handle Feb 29 safely
-
+        # Handle February 29 safely.
         if (
             month == 2
             and day == 29
@@ -407,7 +394,6 @@ def get_next_birthday_date(
 
             return None
 
-
     if occurrence < today:
 
         try:
@@ -417,7 +403,6 @@ def get_next_birthday_date(
                 month,
                 day
             )
-
 
         except ValueError:
 
@@ -435,7 +420,6 @@ def get_next_birthday_date(
             else:
 
                 return None
-
 
     return occurrence
 
@@ -539,6 +523,591 @@ def birthday_payload(
 
 
 # ============================================================
+# PUSH SUBSCRIPTION
+# ============================================================
+
+@notification_bp.get(
+    "/api/push/vapid-public-key"
+)
+@login_required
+def get_vapid_public_key():
+
+    if not VAPID_PUBLIC_KEY:
+
+        return jsonify({
+            "success": False,
+            "error": "VAPID public key is not configured."
+        }), 500
+
+    return jsonify({
+        "success": True,
+        "publicKey": VAPID_PUBLIC_KEY
+    })
+
+
+# ============================================================
+# SAVE PUSH SUBSCRIPTION
+# ============================================================
+
+@notification_bp.post(
+    "/api/push/subscribe"
+)
+@login_required
+def save_push_subscription():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    endpoint = data.get(
+        "endpoint"
+    )
+
+    keys = data.get(
+        "keys"
+    ) or {}
+
+    p256dh = keys.get(
+        "p256dh"
+    )
+
+    auth = keys.get(
+        "auth"
+    )
+
+    if not endpoint or not p256dh or not auth:
+
+        return jsonify({
+            "success": False,
+            "error": "Invalid push subscription."
+        }), 400
+
+    subscription = (
+        PushSubscription.query
+        .filter_by(
+            endpoint=endpoint
+        )
+        .first()
+    )
+
+    if subscription:
+
+        # If the endpoint already exists, associate it
+        # with the currently logged-in user.
+
+        subscription.user_id = current_user.id
+        subscription.p256dh = p256dh
+        subscription.auth = auth
+        subscription.active = True
+        subscription.updated_at = datetime.utcnow()
+
+    else:
+
+        subscription = PushSubscription(
+            user_id=current_user.id,
+            endpoint=endpoint,
+            p256dh=p256dh,
+            auth=auth,
+            active=True
+        )
+
+        db.session.add(
+            subscription
+        )
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Push subscription saved."
+    })
+
+
+# ============================================================
+# REMOVE PUSH SUBSCRIPTION
+# ============================================================
+
+@notification_bp.post(
+    "/api/push/unsubscribe"
+)
+@login_required
+def remove_push_subscription():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    endpoint = data.get(
+        "endpoint"
+    )
+
+    if endpoint:
+
+        subscription = (
+            PushSubscription.query
+            .filter_by(
+                endpoint=endpoint,
+                user_id=current_user.id
+            )
+            .first()
+        )
+
+        if subscription:
+
+            subscription.active = False
+
+            db.session.commit()
+
+    return jsonify({
+        "success": True
+    })
+
+
+# ============================================================
+# SEND ONE WEB PUSH
+# ============================================================
+
+def send_web_push(
+    subscription,
+    payload
+):
+
+    if not VAPID_PRIVATE_KEY:
+        print(
+            "⚠️ VAPID_PRIVATE_KEY is not configured."
+        )
+        return False
+
+    if not VAPID_CLAIM_EMAIL:
+        print(
+            "⚠️ VAPID_CLAIM_EMAIL is not configured."
+        )
+        return False
+
+    subscription_info = {
+        "endpoint":
+            subscription.endpoint,
+
+        "keys": {
+            "p256dh":
+                subscription.p256dh,
+
+            "auth":
+                subscription.auth
+        }
+    }
+
+    try:
+
+        webpush(
+            subscription_info=subscription_info,
+            data=json.dumps(payload),
+            vapid_private_key=VAPID_PRIVATE_KEY,
+            vapid_claims={
+                "sub":
+                    VAPID_CLAIM_EMAIL
+            }
+        )
+
+        return True
+
+    except WebPushException as error:
+
+        print(
+            "❌ Web Push failed:",
+            error
+        )
+
+        # Chrome/browser tells us that the subscription
+        # is no longer valid.
+        response = getattr(
+            error,
+            "response",
+            None
+        )
+
+        status_code = getattr(
+            response,
+            "status_code",
+            None
+        )
+
+        if status_code in (
+            404,
+            410
+        ):
+
+            subscription.active = False
+
+            print(
+                "🗑️ Removed expired push subscription:",
+                subscription.id
+            )
+
+        return False
+
+    except Exception as error:
+
+        print(
+            "❌ Unexpected Web Push error:",
+            error
+        )
+
+        return False
+
+
+# ============================================================
+# PUSH DELIVERY CHECK
+# ============================================================
+
+def push_is_due(
+    alarm,
+    now
+):
+
+    delivery = (
+        PushDelivery.query
+        .filter_by(
+            alarm_id=alarm.id
+        )
+        .first()
+    )
+
+    if not delivery:
+
+        return True, None
+
+    if not delivery.last_sent_at:
+
+        return True, delivery
+
+    cutoff = (
+        now -
+        timedelta(
+            minutes=REPEAT_MINUTES
+        )
+    )
+
+    if delivery.last_sent_at <= cutoff:
+
+        return True, delivery
+
+    return False, delivery
+
+
+# ============================================================
+# CREATE / GET PUSH DELIVERY
+# ============================================================
+
+def get_or_create_push_delivery(
+    alarm_id
+):
+
+    delivery = (
+        PushDelivery.query
+        .filter_by(
+            alarm_id=alarm_id
+        )
+        .first()
+    )
+
+    if delivery:
+
+        return delivery
+
+    delivery = PushDelivery(
+        alarm_id=alarm_id,
+        last_sent_at=None
+    )
+
+    db.session.add(
+        delivery
+    )
+
+    try:
+
+        db.session.flush()
+
+        return delivery
+
+    except Exception:
+
+        db.session.rollback()
+
+        return (
+            PushDelivery.query
+            .filter_by(
+                alarm_id=alarm_id
+            )
+            .first()
+        )
+
+
+# ============================================================
+# GET DUE ALARMS FOR PUSH
+# ============================================================
+
+def get_due_push_items():
+
+    now = get_india_now()
+
+    items = []
+
+    # ========================================================
+    # REMINDERS
+    # ========================================================
+
+    reminders = (
+        Reminder.query
+        .filter_by(
+            status="pending"
+        )
+        .filter(
+            Reminder.reminder_date <= now.date()
+        )
+        .all()
+    )
+
+    for reminder in reminders:
+
+        if (
+            not reminder.reminder_date
+            or not reminder.reminder_time
+        ):
+
+            continue
+
+        scheduled = datetime.combine(
+            reminder.reminder_date,
+            reminder.reminder_time
+        )
+
+        if now < scheduled:
+
+            continue
+
+        occurrence_key = (
+            "reminder:"
+            f"{reminder.id}:"
+            f"{reminder.reminder_date.isoformat()}:"
+            f"{reminder.reminder_time.strftime('%H:%M:%S')}"
+        )
+
+        alarm = get_or_create_alarm(
+            reminder.user_id,
+            "reminder",
+            reminder.id,
+            occurrence_key
+        )
+
+        if not alarm:
+
+            continue
+
+        if alarm.stopped:
+
+            continue
+
+        payload = reminder_payload(
+            alarm,
+            reminder
+        )
+
+        items.append(
+            (
+                alarm,
+                reminder.user_id,
+                payload
+            )
+        )
+
+    # ========================================================
+    # BIRTHDAYS
+    # ========================================================
+
+    birthdays = (
+        Birthday.query
+        .all()
+    )
+
+    for birthday in birthdays:
+
+        if not birthday.birthday:
+
+            continue
+
+        occurrence = get_next_birthday_date(
+            birthday,
+            now.date()
+        )
+
+        if occurrence != now.date():
+
+            continue
+
+        scheduled = datetime.combine(
+            occurrence,
+            BIRTHDAY_NOTIFICATION_TIME
+        )
+
+        if now < scheduled:
+
+            continue
+
+        occurrence_key = (
+            "birthday:"
+            f"{birthday.id}:"
+            f"{occurrence.isoformat()}"
+        )
+
+        alarm = get_or_create_alarm(
+            birthday.user_id,
+            "birthday",
+            birthday.id,
+            occurrence_key
+        )
+
+        if not alarm:
+
+            continue
+
+        if alarm.stopped:
+
+            continue
+
+        payload = birthday_payload(
+            alarm,
+            birthday,
+            occurrence
+        )
+
+        items.append(
+            (
+                alarm,
+                birthday.user_id,
+                payload
+            )
+        )
+
+    return items
+
+
+# ============================================================
+# SEND DUE PUSH NOTIFICATIONS
+#
+# Called by scheduler.py.
+#
+# IMPORTANT:
+# This does NOT claim the normal notification alarm.
+#
+# Therefore:
+#
+# 1. Existing page notification continues working.
+# 2. Push notification works when app is closed.
+# ============================================================
+
+def send_due_push_notifications():
+
+    now = get_india_now()
+
+    try:
+
+        items = get_due_push_items()
+
+        for alarm, user_id, payload in items:
+
+            should_send, delivery = push_is_due(
+                alarm,
+                now
+            )
+
+            if not should_send:
+
+                continue
+
+            subscriptions = (
+                PushSubscription.query
+                .filter_by(
+                    user_id=user_id,
+                    active=True
+                )
+                .all()
+            )
+
+            if not subscriptions:
+
+                continue
+
+            sent_any = False
+
+            for subscription in subscriptions:
+
+                success = send_web_push(
+                    subscription,
+                    {
+                        "title":
+                            payload.get(
+                                "title",
+                                "Birthday Reminder"
+                            )
+                        if payload.get("type") == "reminder"
+                        else "Birthday Reminder",
+
+                        "body":
+                            payload.get(
+                                "message",
+                                "You have a reminder."
+                            ),
+
+                        "type":
+                            payload.get(
+                                "type"
+                            ),
+
+                        "alarm_id":
+                            payload.get(
+                                "id"
+                            ),
+
+                        "source_id":
+                            payload.get(
+                                "source_id"
+                            ),
+
+                        "url":
+                            "/"
+                    }
+                )
+
+                if success:
+
+                    sent_any = True
+
+            if sent_any:
+
+                if not delivery:
+
+                    delivery = get_or_create_push_delivery(
+                        alarm.id
+                    )
+
+                if delivery:
+
+                    delivery.last_sent_at = now
+
+        db.session.commit()
+
+    except Exception as error:
+
+        print(
+            "❌ Push scheduler error:",
+            error
+        )
+
+        db.session.rollback()
+
+
+# ============================================================
 # DUE NOTIFICATIONS
 # ============================================================
 
@@ -550,230 +1119,143 @@ def due_notifications():
 
     now = get_india_now()
 
-
     notifications = []
-
 
     # ========================================================
     # TIME REMINDERS
     # ========================================================
 
     reminders = (
-
         Reminder.query
-
         .filter_by(
-
             user_id=current_user.id,
-
             status="pending"
-
         )
-
         .filter(
-
-            Reminder.reminder_date
-            <= now.date()
-
+            Reminder.reminder_date <= now.date()
         )
-
         .all()
-
     )
-
 
     for reminder in reminders:
 
-
         if (
             not reminder.reminder_date
-            or
-            not reminder.reminder_time
+            or not reminder.reminder_time
         ):
 
             continue
 
-
         scheduled = datetime.combine(
-
             reminder.reminder_date,
-
             reminder.reminder_time
-
         )
 
-
         # Not due yet
-
         if now < scheduled:
 
             continue
 
-
         occurrence_key = (
-
             "reminder:"
-
             f"{reminder.id}:"
-
             f"{reminder.reminder_date.isoformat()}:"
-
             f"{reminder.reminder_time.strftime('%H:%M:%S')}"
-
         )
-
 
         alarm = get_or_create_alarm(
-
             current_user.id,
-
             "reminder",
-
             reminder.id,
-
             occurrence_key
-
         )
-
 
         if not alarm:
 
             continue
 
-
         claimed = claim_notification(
-
             alarm.id,
-
             now
-
         )
-
 
         if claimed:
 
             notifications.append(
-
                 reminder_payload(
-
                     claimed,
-
                     reminder
-
                 )
-
             )
-
 
     # ========================================================
     # BIRTHDAYS
     # ========================================================
 
     birthdays = (
-
         Birthday.query
-
         .filter_by(
             user_id=current_user.id
         )
-
         .all()
-
     )
 
-
     for birthday in birthdays:
-
 
         if not birthday.birthday:
 
             continue
 
-
         occurrence = get_next_birthday_date(
-
             birthday,
-
             now.date()
-
         )
-
 
         if occurrence != now.date():
 
             continue
 
-
         scheduled = datetime.combine(
-
             occurrence,
-
             BIRTHDAY_NOTIFICATION_TIME
-
         )
 
-
         # Birthday alarm starts at 09:00 AM.
-
         if now < scheduled:
 
             continue
 
-
         occurrence_key = (
-
             "birthday:"
-
             f"{birthday.id}:"
-
             f"{occurrence.isoformat()}"
-
         )
-
 
         alarm = get_or_create_alarm(
-
             current_user.id,
-
             "birthday",
-
             birthday.id,
-
             occurrence_key
-
         )
-
 
         if not alarm:
 
             continue
 
-
         claimed = claim_notification(
-
             alarm.id,
-
             now
-
         )
-
 
         if claimed:
 
             notifications.append(
-
                 birthday_payload(
-
                     claimed,
-
                     birthday,
-
                     occurrence
-
                 )
-
             )
-
 
     # ========================================================
     # SAVE BACKEND STATE
@@ -781,15 +1263,12 @@ def due_notifications():
 
     db.session.commit()
 
-
     return jsonify({
-
         "success":
             True,
 
         "notifications":
             notifications
-
     })
 
 
@@ -806,32 +1285,20 @@ def stop_notification(
 ):
 
     alarm = (
-
         NotificationAlarm.query
-
         .filter_by(
-
             id=alarm_id,
-
             user_id=current_user.id
-
         )
-
         .first_or_404()
-
     )
 
-
     alarm.stopped = True
-
     alarm.active = False
-
 
     db.session.commit()
 
-
     return jsonify({
-
         "success":
             True,
 
@@ -840,7 +1307,6 @@ def stop_notification(
 
         "stopped":
             True
-
     })
 
 
@@ -854,30 +1320,19 @@ def stop_active_alarms_for_reminder(
 ):
 
     alarms = (
-
         NotificationAlarm.query
-
         .filter_by(
-
             source_id=reminder_id,
-
             user_id=user_id,
-
             kind="reminder",
-
             active=True
-
         )
-
         .all()
-
     )
-
 
     for alarm in alarms:
 
         alarm.stopped = True
-
         alarm.active = False
 
 
@@ -894,25 +1349,15 @@ def reset_alarms_for_reminder(
 ):
 
     (
-
         NotificationAlarm.query
-
         .filter_by(
-
             source_id=reminder_id,
-
             user_id=user_id,
-
             kind="reminder"
-
         )
-
         .delete(
-
             synchronize_session=False
-
         )
-
     )
 
 
@@ -928,23 +1373,13 @@ def reset_alarms_for_birthday(
 ):
 
     (
-
         NotificationAlarm.query
-
         .filter_by(
-
             source_id=birthday_id,
-
             user_id=user_id,
-
             kind="birthday"
-
         )
-
         .delete(
-
             synchronize_session=False
-
         )
-
     )
