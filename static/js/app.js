@@ -424,78 +424,38 @@ Backend:
 
 
     /* =========================================================
-       BROWSER NOTIFICATION
-    ========================================================= */
+   BROWSER / SYSTEM NOTIFICATION
+========================================================= */
 
-    function showBrowserNotification(
+function showBrowserNotification(
+    item
+) {
+
+    /*
+     * SYSTEM NOTIFICATION FLOW
+     *
+     * Flask Scheduler
+     *       ↓
+     * Web Push
+     *       ↓
+     * Service Worker
+     *       ↓
+     * Android notification
+     *
+     * We do NOT use new Notification() here.
+     *
+     * This prevents duplicate Android notifications.
+     *
+     * The in-page floating reminder bar is still
+     * displayed separately by showAlarm().
+     */
+
+    console.log(
+        "Web Push system notification handled by Service Worker:",
         item
-    ) {
+    );
 
-        if (
-            !("Notification" in window)
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            Notification.permission !==
-            "granted"
-        ) {
-
-            return;
-
-        }
-
-
-        const isBirthday =
-            item.type ===
-            "birthday";
-
-
-        const title =
-            isBirthday
-                ? "🎂 Birthday Today"
-                : "🔔 Reminder Due";
-
-
-        const body =
-            isBirthday
-                ? item.message
-                : (
-                    `${item.title} — ` +
-                    `Scheduled: ` +
-                    `${formatTime(item.time)}`
-                );
-
-
-        try {
-
-            new Notification(
-                title,
-                {
-                    body:
-                        body,
-
-                    tag:
-                        `bday-reminder-${item.id}`
-                }
-            );
-
-        }
-
-        catch (error) {
-
-            console.warn(
-                "Browser notification failed:",
-                error
-            );
-
-        }
-
-    }
+}
 
 
     /* =========================================================
