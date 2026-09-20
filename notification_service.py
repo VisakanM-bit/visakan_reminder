@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 
 from pywebpush import webpush, WebPushException
 
@@ -247,14 +248,17 @@ def get_or_create_alarm(
 
     try:
 
-        db.session.flush()
+        # Use a SAVEPOINT so a concurrent insert does not
+        # roll back the whole request transaction.
+        with db.session.begin_nested():
+            db.session.flush()
 
         return alarm
 
-    except Exception:
+    except IntegrityError:
 
-        db.session.rollback()
-
+        # Another request/scheduler worker may have created
+        # this exact alarm at the same time.
         return (
             NotificationAlarm.query
             .filter_by(
@@ -826,13 +830,12 @@ def get_or_create_push_delivery(
 
     try:
 
-        db.session.flush()
+        with db.session.begin_nested():
+            db.session.flush()
 
         return delivery
 
-    except Exception:
-
-        db.session.rollback()
+    except IntegrityError:
 
         return (
             PushDelivery.query
@@ -1347,6 +1350,26 @@ def reset_alarms_for_reminder(
     reminder_id,
     user_id
 ):
+
+    alarm_ids = (
+        db.session.query(NotificationAlarm.id)
+        .filter_by(
+            source_id=reminder_id,
+            user_id=user_id,
+            kind="reminder"
+        )
+        .subquery()
+    )
+
+    (
+        PushDelivery.query
+        .filter(
+            PushDelivery.alarm_id.in_(alarm_ids)
+        )
+        .delete(
+            synchronize_session=False
+        )
+    )
 
     (
         NotificationAlarm.query
