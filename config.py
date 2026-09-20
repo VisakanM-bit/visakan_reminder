@@ -75,9 +75,34 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
+    # --------------------------------------------------------
+    # DATABASE CONNECTION POOL
+    # --------------------------------------------------------
+    #
+    # Supabase PostgreSQL is accessed through a network
+    # connection from Render.
+    #
+    # pool_pre_ping:
+    #   Checks a connection before reusing it.
+    #
+    # pool_recycle:
+    #   Recycles older connections so stale SSL connections
+    #   are not kept for too long.
+    #
+    # pool_size / max_overflow:
+    #   Keeps the connection pool small and controlled.
+    #
+    # --------------------------------------------------------
+
     SQLALCHEMY_ENGINE_OPTIONS = {
 
-        "pool_pre_ping": True
+        "pool_pre_ping": True,
+
+        "pool_recycle": 300,
+
+        "pool_size": 5,
+
+        "max_overflow": 2
 
     }
 
