@@ -409,17 +409,35 @@ def send_email(
 
     if not smtp_configuration_ready():
 
+        print("❌ SMTP configuration is incomplete.")
         print(
-            "⚠️ SMTP configuration is incomplete."
+            f"   SMTP_SERVER configured: {bool(SMTP_SERVER)}"
+        )
+        print(
+            f"   SMTP_PORT configured: {bool(SMTP_PORT)}"
+        )
+        print(
+            f"   SMTP_USERNAME configured: {bool(SMTP_USERNAME)}"
+        )
+        print(
+            f"   SMTP_PASSWORD configured: {bool(SMTP_PASSWORD)}"
+        )
+        print(
+            f"   SMTP_FROM_EMAIL configured: {bool(SMTP_FROM_EMAIL)}"
         )
 
         return False
 
     try:
 
+        print("📧 Preparing SMTP email...")
+        print(f"   From: {SMTP_FROM_EMAIL}")
+        print(f"   To: {message['To']}")
+        print(f"   Subject: {message['Subject']}")
         print(
-            "📧 Connecting to Gmail SMTP..."
+            f"   SMTP server: {SMTP_SERVER}:{SMTP_PORT}"
         )
+        print("📧 Connecting to Gmail SMTP...")
 
         with smtplib.SMTP(
             SMTP_SERVER,
@@ -579,8 +597,9 @@ def send_birthday_email(
 
 def send_due_email_notifications():
 
+    print("📧 Checking due email notifications...")
     print(
-        "📧 Checking due email notifications..."
+        f"   Recipient: {DEFAULT_RECIPIENT_EMAIL}"
     )
 
     if not smtp_configuration_ready():
@@ -599,6 +618,10 @@ def send_due_email_notifications():
         # ----------------------------------------------------
 
         items = get_due_push_items()
+
+        print(
+            f"📧 Due notification items found: {len(items)}"
+        )
 
         if not items:
 
@@ -642,6 +665,12 @@ def send_due_email_notifications():
 
             notification_type = payload.get(
                 "type"
+            )
+
+            print(
+                f"📧 Processing alarm {alarm_id} "
+                f"(type={notification_type}) "
+                f"for {DEFAULT_RECIPIENT_EMAIL}"
             )
 
             # =================================================
@@ -786,7 +815,7 @@ def send_due_email_notifications():
                     db.session.commit()
 
                     print(
-                        f"📧 Email delivery recorded "
+                        f"✅ Email delivery recorded successfully "
                         f"for alarm {alarm_id}."
                     )
 
