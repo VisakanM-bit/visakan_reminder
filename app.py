@@ -88,6 +88,9 @@ from notification_service import (
 
 from scheduler import start_scheduler
 
+# Centralized Web Push service
+from push_service import push_bp
+
 # ============================================================
 # APPLICATION SETUP
 # ============================================================
@@ -101,7 +104,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_pre_ping": True
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+    "pool_size": 5,
+    "max_overflow": 2
 }
 
 
@@ -132,6 +138,11 @@ db.init_app(app)
 
 app.register_blueprint(
     notification_bp
+)
+
+# Centralized Web Push API
+app.register_blueprint(
+    push_bp
 )
 
 
