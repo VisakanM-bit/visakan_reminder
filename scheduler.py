@@ -1,4 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
+import time
 
 from notification_service import (
     send_due_push_notifications
@@ -13,19 +14,65 @@ def check_reminders(app):
     with app.app_context():
         print("⏰ Checking reminders...")
 
+        # --------------------------------------------------------
+        # PUSH NOTIFICATION CHECK
+        # --------------------------------------------------------
+        push_start = time.time()
+
         try:
             send_due_push_notifications()
-            print("✅ Push notification check completed.")
+
+            push_duration = time.time() - push_start
+
+            print(
+                f"✅ Push notification check completed "
+                f"in {push_duration:.2f}s."
+            )
+
         except Exception as error:
+            push_duration = time.time() - push_start
+
             print("❌ Push notification error:")
             print(f"   {error}")
+            print(
+                f"   Push check stopped after "
+                f"{push_duration:.2f}s."
+            )
+
+        # --------------------------------------------------------
+        # EMAIL / SMTP NOTIFICATION CHECK
+        # --------------------------------------------------------
+        email_start = time.time()
 
         try:
             send_due_email_notifications()
-            print("📧 Email notification check completed.")
+
+            email_duration = time.time() - email_start
+
+            print(
+                f"📧 Email notification check completed "
+                f"in {email_duration:.2f}s."
+            )
+
         except Exception as error:
+            email_duration = time.time() - email_start
+
             print("❌ Email notification error:")
             print(f"   {error}")
+            print(
+                f"   Email check stopped after "
+                f"{email_duration:.2f}s."
+            )
+
+        # --------------------------------------------------------
+        # TOTAL SCHEDULER EXECUTION TIME
+        # --------------------------------------------------------
+        total_duration = time.time() - push_start
+
+        print(
+            f"⏱️ Total reminder check completed "
+            f"in {total_duration:.2f}s."
+        )
 
 
 def start_scheduler(app):
