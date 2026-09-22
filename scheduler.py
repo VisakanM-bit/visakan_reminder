@@ -18,14 +18,14 @@ from email_service import (
 # CHECK REMINDERS
 # ============================================================
 #
-# Every 30 seconds this function:
+# Runs every 30 seconds.
 #
-# 1. Checks due reminders
-# 2. Sends Android/Web Push notifications
-# 3. Sends email notifications through Gmail SMTP
+# It checks two independent notification channels:
 #
-# Push and email delivery are handled separately so that
-# failure of one notification channel does not stop the other.
+# 1. Web Push / Android notification
+# 2. Email through Gmail SMTP
+#
+# A failure in one channel does not stop the other channel.
 #
 # ============================================================
 
