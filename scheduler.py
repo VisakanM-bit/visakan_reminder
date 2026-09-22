@@ -5,11 +5,28 @@
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from notification_service import send_due_push_notifications
+from notification_service import (
+    send_due_push_notifications
+)
+
+from email_service import (
+    send_due_email_notifications
+)
 
 
 # ============================================================
-# CHECK REMINDERS / SEND WEB PUSH
+# CHECK REMINDERS
+# ============================================================
+#
+# Every 30 seconds this function:
+#
+# 1. Checks due reminders
+# 2. Sends Android/Web Push notifications
+# 3. Sends email notifications through Gmail SMTP
+#
+# Push and email delivery are handled separately so that
+# failure of one notification channel does not stop the other.
+#
 # ============================================================
 
 def check_reminders(app):
@@ -17,17 +34,14 @@ def check_reminders(app):
     with app.app_context():
 
         print(
-            "⏰ Checking reminders and push notifications..."
+            "⏰ Checking reminders..."
         )
 
-        try:
+        # ====================================================
+        # WEB PUSH
+        # ====================================================
 
-            # ------------------------------------------------
-            # Send Web Push notifications
-            #
-            # This works independently of whether the PWA
-            # is currently open.
-            # ------------------------------------------------
+        try:
 
             send_due_push_notifications()
 
@@ -38,7 +52,29 @@ def check_reminders(app):
         except Exception as error:
 
             print(
-                "❌ Scheduler error:"
+                "❌ Push notification error:"
+            )
+
+            print(
+                f"   {error}"
+            )
+
+        # ====================================================
+        # EMAIL
+        # ====================================================
+
+        try:
+
+            send_due_email_notifications()
+
+            print(
+                "📧 Email notification check completed."
+            )
+
+        except Exception as error:
+
+            print(
+                "❌ Email notification error:"
             )
 
             print(
@@ -57,6 +93,7 @@ def start_scheduler(app):
     )
 
     scheduler.add_job(
+
         func=check_reminders,
 
         args=[app],
@@ -82,6 +119,10 @@ def start_scheduler(app):
 
     print(
         "📱 Web Push background notifications enabled."
+    )
+
+    print(
+        "📧 SMTP email notification scheduler enabled."
     )
 
     return scheduler
