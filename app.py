@@ -86,7 +86,124 @@ from notification_service import (
 # BACKGROUND PUSH SCHEDULER
 # ============================================================
 
-from scheduler import start_scheduler
+# ============================================================
+# BACKGROUND NOTIFICATION SCHEDULER
+# ============================================================
+# The scheduler is defined here so the deployed application always
+# uses the current independent push/email jobs. This avoids an old
+# scheduler.py implementation continuing to run after deployment.
+# Push and email are intentionally separate jobs so a slow email
+# connection cannot block Android/Web Push notifications.
+# ============================================================
+
+from apscheduler.schedulers.background import BackgroundScheduler
+import time
+
+from notification_service import send_due_push_notifications
+from email_service import send_due_email_notifications
+
+
+def check_push_notifications(app):
+    with app.app_context():
+        start_time = time.time()
+        app.logger.info("⏰ Checking push notifications...")
+
+        try:
+            send_due_push_notifications()
+            duration = time.time() - start_time
+            app.logger.info(
+                "✅ Push notification check completed in %.2fs.",
+                duration
+            )
+        except Exception as error:
+            duration = time.time() - start_time
+            app.logger.exception(
+                "❌ Push notification error after %.2fs: %s",
+                duration,
+                error
+            )
+
+
+def check_email_notifications(app):
+    with app.app_context():
+        start_time = time.time()
+        app.logger.info("📧 Checking email notifications...")
+
+        try:
+            send_due_email_notifications()
+            duration = time.time() - start_time
+            app.logger.info(
+                "✅ Email notification check completed in %.2fs.",
+                duration
+            )
+        except Exception as error:
+            duration = time.time() - start_time
+            app.logger.exception(
+                "❌ Email notification error after %.2fs: %s",
+                duration,
+                error
+            )
+
+
+_notification_scheduler = None
+
+
+def start_scheduler(app):
+    global _notification_scheduler
+
+    # Prevent this process from creating the scheduler more than once.
+    if _notification_scheduler is not None:
+        app.logger.info("🔄 Notification scheduler already running.")
+        return _notification_scheduler
+
+    scheduler = BackgroundScheduler(
+        timezone="Asia/Kolkata"
+    )
+
+    # --------------------------------------------------------
+    # PUSH JOB
+    # --------------------------------------------------------
+    scheduler.add_job(
+        func=check_push_notifications,
+        args=[app],
+        trigger="interval",
+        seconds=30,
+        id="push_notification_checker",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=120,
+        next_run_time=None
+    )
+
+    # --------------------------------------------------------
+    # EMAIL JOB
+    # --------------------------------------------------------
+    scheduler.add_job(
+        func=check_email_notifications,
+        args=[app],
+        trigger="interval",
+        seconds=30,
+        id="email_notification_checker",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=120,
+        next_run_time=None
+    )
+
+    scheduler.start()
+    _notification_scheduler = scheduler
+
+    app.logger.info("⏰ Reminder scheduler started.")
+    app.logger.info("📱 Web Push background notifications enabled.")
+    app.logger.info("📧 Email notification scheduler enabled.")
+    app.logger.info(
+        "🔄 Push and email checks run independently every 30 seconds."
+    )
+
+    return scheduler
+
 
 # Centralized Web Push service
 from push_service import push_bp
@@ -266,7 +383,10 @@ def force_permanent_user():
         "database_health"
     ):
         return None
-        app.logger.info(
+
+    # Keep lightweight diagnostics available in Render logs without
+    # exposing the database password.
+    app.logger.info(
         "DATABASE URL: %s",
         db.engine.url.render_as_string(hide_password=True)
     )
@@ -3384,7 +3504,7 @@ with app.app_context():
             error
         )
 # ============================================================
-# START BACKGROUND PUSH SCHEDULER
+# START BACKGROUND NOTIFICATION SCHEDULER
 # ============================================================
 
 try:
@@ -3394,13 +3514,13 @@ try:
     )
 
     app.logger.info(
-        "✅ Background push scheduler started."
+        "✅ Background notification scheduler started."
     )
 
 except Exception as error:
 
     app.logger.exception(
-        "❌ Failed to start background push scheduler: %s",
+        "❌ Failed to start background notification scheduler: %s",
         error
     )
 
