@@ -10,10 +10,16 @@ from email_service import send_due_email_notifications
 # ============================================================
 
 def check_push_notifications(app):
-    with app.app_context():
-        print("⏰ Checking push notifications...")
+    """
+    Check and send all due Web Push / Android notifications.
 
+    This job is independent from email so a slow email operation
+    cannot block push notification processing.
+    """
+    with app.app_context():
         start_time = time.time()
+
+        print("⏰ Checking push notifications...")
 
         try:
             send_due_push_notifications()
@@ -41,10 +47,16 @@ def check_push_notifications(app):
 # ============================================================
 
 def check_email_notifications(app):
-    with app.app_context():
-        print("📧 Checking email notifications...")
+    """
+    Check and send all due email notifications.
 
+    This job is independent from push so a slow SMTP operation
+    cannot block Android/Web Push notifications.
+    """
+    with app.app_context():
         start_time = time.time()
+
+        print("📧 Checking email notifications...")
 
         try:
             send_due_email_notifications()
@@ -72,19 +84,27 @@ def check_email_notifications(app):
 # ============================================================
 
 def start_scheduler(app):
+    """
+    Start independent notification jobs.
+
+    PUSH:
+        Runs every 30 seconds.
+        max_instances=1 prevents overlapping push checks.
+
+    EMAIL:
+        Runs every 30 seconds.
+        max_instances=1 prevents overlapping email checks.
+
+    The two jobs are completely independent. A slow or blocked
+    email operation cannot stop the push notification job.
+    """
+
     scheduler = BackgroundScheduler(
         timezone="Asia/Kolkata"
     )
 
     # --------------------------------------------------------
-    # PUSH JOB
-    # --------------------------------------------------------
-    # Runs independently from email.
-    # A slow email connection cannot block push notifications.
-    # max_instances=1 prevents duplicate overlapping push jobs.
-    # coalesce=True prevents a backlog of missed executions.
-    # misfire_grace_time allows a delayed scheduler run to still
-    # execute if it was only briefly missed.
+    # PUSH NOTIFICATION JOB
     # --------------------------------------------------------
 
     scheduler.add_job(
@@ -100,14 +120,7 @@ def start_scheduler(app):
     )
 
     # --------------------------------------------------------
-    # EMAIL JOB
-    # --------------------------------------------------------
-    # Runs independently from push.
-    # A slow SMTP/email operation cannot block push checks.
-    # max_instances=1 prevents duplicate overlapping emails.
-    # coalesce=True prevents a backlog of old checks.
-    # misfire_grace_time allows a delayed scheduler run to still
-    # execute if it was only briefly missed.
+    # EMAIL NOTIFICATION JOB
     # --------------------------------------------------------
 
     scheduler.add_job(
@@ -122,11 +135,18 @@ def start_scheduler(app):
         misfire_grace_time=120
     )
 
+    # --------------------------------------------------------
+    # START SCHEDULER
+    # --------------------------------------------------------
+
     scheduler.start()
 
     print("⏰ Reminder scheduler started.")
     print("📱 Web Push background notifications enabled.")
     print("📧 Email notification scheduler enabled.")
-    print("🔄 Push and email checks run independently every 30 seconds.")
+    print(
+        "🔄 Push and email checks run independently "
+        "every 30 seconds."
+    )
 
     return scheduler
