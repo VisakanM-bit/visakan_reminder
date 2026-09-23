@@ -1,43 +1,46 @@
 # ============================================================
 # BDAY REMINDER
-# EMAIL NOTIFICATION SERVICE
+# RELIABLE EMAIL NOTIFICATION SERVICE
 # ============================================================
 #
-# This service:
+# Purpose:
 #
-# 1. Sends reminder emails through Gmail SMTP.
-# 2. Sends birthday notification emails.
-# 3. Uses the same notification information as the
-#    existing notification_service.py.
-# 4. Prevents duplicate emails.
-# 5. Retries automatically if an email fails.
+# 1. Works with the EXISTING scheduler.py.
+# 2. Keeps the existing function name:
+#       send_due_email_notifications()
+# 3. Checks the same due-notification source used by
+#    notification_service.py.
+# 4. Runs safely every 30 seconds through scheduler.py.
+# 5. Retries failed email delivery on the next 30-second cycle.
+# 6. Prevents duplicate emails after successful delivery.
+# 7. Uses a short SMTP timeout so a slow SMTP connection cannot
+#    block the scheduler for a long time.
+# 8. Keeps reminder and birthday email formatting.
 #
-# SMTP credentials are read ONLY from environment variables.
+# IMPORTANT:
+# Replace the existing email_service.py with this file.
+# Do NOT change app.py, notification_service.py, database models,
+# PWA files, chat files, or reminder creation files for this step.
 #
 # ============================================================
-
 
 import os
 import smtplib
+import time
 
 from datetime import datetime
 
 from email.message import EmailMessage
 
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
+
 from database import db
 
-from database.models import (
-    Reminder,
-    Birthday
-)
-
-from notification_service import (
-    get_due_push_items
-)
+from notification_service import get_due_push_items
 
 
 # ============================================================
-# SMTP CONFIGURATION
+# CONFIGURATION
 # ============================================================
 
 SMTP_SERVER = os.environ.get(
@@ -72,22 +75,6 @@ SMTP_FROM_NAME = os.environ.get(
     "Bday Reminder"
 )
 
-
-# ============================================================
-# EMAIL RECIPIENT
-# ============================================================
-#
-# Current project requirement:
-#
-# Send notification emails to:
-#
-# visakanreminder@gmail.com
-#
-# This can later be changed to a user-specific email
-# stored in the database.
-#
-# ============================================================
-
 DEFAULT_RECIPIENT_EMAIL = os.environ.get(
     "REMINDER_EMAIL",
     "visakanreminder@gmail.com"
@@ -95,23 +82,27 @@ DEFAULT_RECIPIENT_EMAIL = os.environ.get(
 
 
 # ============================================================
-# EMAIL DELIVERY TRACKING
-# ============================================================
-#
-# The scheduler runs every 30 seconds.
-#
-# Therefore, we MUST remember which notification has already
-# received an email.
-#
-# IMPORTANT:
-# We intentionally do NOT create a foreign-key relationship
-# with notification_alarms.
-#
-# This prevents email tracking records from blocking the
-# existing alarm deletion/reset functions.
-#
+# RELIABILITY SETTINGS
 # ============================================================
 
+# scheduler.py checks every 30 seconds.
+EMAIL_CHECK_INTERVAL_SECONDS = 30
+
+# Maximum time allowed for one SMTP connection/send attempt.
+# Keeping this below the scheduler interval prevents a slow SMTP
+# connection from occupying the scheduler for the entire cycle.
+SMTP_TIMEOUT_SECONDS = 10
+
+# Retry database reads a small number of times inside one cycle.
+DATABASE_READ_RETRIES = 2
+
+# Small pause between database retry attempts.
+DATABASE_RETRY_DELAY_SECONDS = 1
+
+
+# ============================================================
+# EMAIL DELIVERY TRACKING
+# ============================================================
 
 class EmailDelivery(db.Model):
 
@@ -123,9 +114,8 @@ class EmailDelivery(db.Model):
     )
 
     # NotificationAlarm ID.
-    #
-    # This is intentionally an Integer without a foreign key.
-    #
+    # Intentionally NOT a foreign key so email tracking cannot
+    # interfere with existing notification alarm operations.
     alarm_id = db.Column(
         db.Integer,
         nullable=False,
@@ -133,7 +123,7 @@ class EmailDelivery(db.Model):
         index=True
     )
 
-    # Time at which the email was successfully sent.
+    # Set ONLY after an email has actually been sent successfully.
     last_sent_at = db.Column(
         db.DateTime,
         nullable=True
@@ -147,9 +137,8 @@ class EmailDelivery(db.Model):
 
 
 # ============================================================
-# SMTP CONFIGURATION CHECK
+# SMTP CONFIGURATION
 # ============================================================
-
 
 def smtp_configuration_ready():
 
@@ -159,17 +148,15 @@ def smtp_configuration_ready():
         and SMTP_USERNAME
         and SMTP_PASSWORD
         and SMTP_FROM_EMAIL
+        and DEFAULT_RECIPIENT_EMAIL
     )
 
 
 # ============================================================
-# GET EMAIL DELIVERY RECORD
+# GET DELIVERY RECORD
 # ============================================================
 
-
-def get_email_delivery(
-    alarm_id
-):
+def get_email_delivery(alarm_id):
 
     return (
         EmailDelivery.query
@@ -181,20 +168,16 @@ def get_email_delivery(
 
 
 # ============================================================
-# GET / CREATE EMAIL DELIVERY RECORD
+# CREATE DELIVERY RECORD
 # ============================================================
 
-
-def get_or_create_email_delivery(
-    alarm_id
-):
+def get_or_create_email_delivery(alarm_id):
 
     delivery = get_email_delivery(
         alarm_id
     )
 
     if delivery:
-
         return delivery
 
     delivery = EmailDelivery(
@@ -216,15 +199,61 @@ def get_or_create_email_delivery(
 
         db.session.rollback()
 
+        # Another scheduler cycle/process may have created it.
         return get_email_delivery(
             alarm_id
         )
 
 
 # ============================================================
-# BUILD REMINDER EMAIL
+# DATE / TIME FORMATTING
 # ============================================================
 
+def format_email_date(value):
+
+    if not value:
+        return ""
+
+    try:
+
+        parsed = datetime.strptime(
+            str(value),
+            "%Y-%m-%d"
+        )
+
+        return parsed.strftime(
+            "%d %B %Y"
+        )
+
+    except Exception:
+
+        return str(value)
+
+
+def format_email_time(value):
+
+    if not value:
+        return ""
+
+    try:
+
+        parsed = datetime.strptime(
+            str(value),
+            "%H:%M"
+        )
+
+        return parsed.strftime(
+            "%I:%M %p"
+        )
+
+    except Exception:
+
+        return str(value)
+
+
+# ============================================================
+# BUILD REMINDER EMAIL
+# ============================================================
 
 def build_reminder_email(
     title,
@@ -242,10 +271,6 @@ def build_reminder_email(
 
     message = EmailMessage()
 
-    # --------------------------------------------------------
-    # EMAIL HEADERS
-    # --------------------------------------------------------
-
     message["From"] = (
         f"{SMTP_FROM_NAME} "
         f"<{SMTP_FROM_EMAIL}>"
@@ -256,10 +281,6 @@ def build_reminder_email(
     message["Subject"] = (
         f"🔔 Reminder: {title}"
     )
-
-    # --------------------------------------------------------
-    # EMAIL BODY
-    # --------------------------------------------------------
 
     lines = [
         "🔔 BDAY REMINDER",
@@ -317,7 +338,6 @@ def build_reminder_email(
 # BUILD BIRTHDAY EMAIL
 # ============================================================
 
-
 def build_birthday_email(
     name,
     body,
@@ -333,10 +353,6 @@ def build_birthday_email(
 
     message = EmailMessage()
 
-    # --------------------------------------------------------
-    # EMAIL HEADERS
-    # --------------------------------------------------------
-
     message["From"] = (
         f"{SMTP_FROM_NAME} "
         f"<{SMTP_FROM_EMAIL}>"
@@ -347,10 +363,6 @@ def build_birthday_email(
     message["Subject"] = (
         f"🎂 Birthday Reminder: {name}"
     )
-
-    # --------------------------------------------------------
-    # EMAIL BODY
-    # --------------------------------------------------------
 
     lines = [
         "🎂 BIRTHDAY REMINDER",
@@ -399,55 +411,46 @@ def build_birthday_email(
 
 
 # ============================================================
-# SEND EMAIL THROUGH GMAIL SMTP
+# SEND ONE EMAIL
 # ============================================================
 
-
-def send_email(
-    message
-):
+def send_email(message):
 
     if not smtp_configuration_ready():
 
-        print("❌ SMTP configuration is incomplete.")
         print(
-            f"   SMTP_SERVER configured: {bool(SMTP_SERVER)}"
-        )
-        print(
-            f"   SMTP_PORT configured: {bool(SMTP_PORT)}"
-        )
-        print(
-            f"   SMTP_USERNAME configured: {bool(SMTP_USERNAME)}"
-        )
-        print(
-            f"   SMTP_PASSWORD configured: {bool(SMTP_PASSWORD)}"
-        )
-        print(
-            f"   SMTP_FROM_EMAIL configured: {bool(SMTP_FROM_EMAIL)}"
+            "❌ SMTP configuration is incomplete."
         )
 
         return False
 
     try:
 
-        print("📧 Preparing SMTP email...")
-        print(f"   From: {SMTP_FROM_EMAIL}")
-        print(f"   To: {message['To']}")
-        print(f"   Subject: {message['Subject']}")
         print(
-            f"   SMTP server: {SMTP_SERVER}:{SMTP_PORT}"
+            "📧 Connecting to Gmail SMTP..."
         )
-        print("📧 Connecting to Gmail SMTP...")
+
+        print(
+            f"   SMTP: {SMTP_SERVER}:{SMTP_PORT}"
+        )
+
+        print(
+            f"   From: {SMTP_FROM_EMAIL}"
+        )
+
+        print(
+            f"   To: {message['To']}"
+        )
+
+        print(
+            f"   Subject: {message['Subject']}"
+        )
 
         with smtplib.SMTP(
             SMTP_SERVER,
             SMTP_PORT,
-            timeout=30
+            timeout=SMTP_TIMEOUT_SECONDS
         ) as smtp:
-
-            # ------------------------------------------------
-            # START TLS
-            # ------------------------------------------------
 
             smtp.ehlo()
 
@@ -455,18 +458,10 @@ def send_email(
 
             smtp.ehlo()
 
-            # ------------------------------------------------
-            # LOGIN
-            # ------------------------------------------------
-
             smtp.login(
                 SMTP_USERNAME,
                 SMTP_PASSWORD
             )
-
-            # ------------------------------------------------
-            # SEND MESSAGE
-            # ------------------------------------------------
 
             smtp.send_message(
                 message
@@ -500,6 +495,15 @@ def send_email(
 
         return False
 
+    except (TimeoutError, OSError):
+
+        print(
+            "❌ Gmail SMTP connection timed out "
+            "or was interrupted."
+        )
+
+        return False
+
     except smtplib.SMTPException as error:
 
         print(
@@ -521,7 +525,6 @@ def send_email(
 # SEND REMINDER EMAIL
 # ============================================================
 
-
 def send_reminder_email(
     title,
     body,
@@ -532,17 +535,11 @@ def send_reminder_email(
 ):
 
     message = build_reminder_email(
-
         title=title,
-
         body=body,
-
         recipient=recipient,
-
         date_text=date_text,
-
         time_text=time_text,
-
         place=place
     )
 
@@ -555,7 +552,6 @@ def send_reminder_email(
 # SEND BIRTHDAY EMAIL
 # ============================================================
 
-
 def send_birthday_email(
     name,
     body,
@@ -565,15 +561,10 @@ def send_birthday_email(
 ):
 
     message = build_birthday_email(
-
         name=name,
-
         body=body,
-
         recipient=recipient,
-
         date_text=date_text,
-
         time_text=time_text
     )
 
@@ -583,23 +574,104 @@ def send_birthday_email(
 
 
 # ============================================================
+# GET DUE ITEMS SAFELY
+# ============================================================
+
+def get_due_items_safely():
+
+    for attempt in range(
+        1,
+        DATABASE_READ_RETRIES + 1
+    ):
+
+        try:
+
+            return get_due_push_items()
+
+        except OperationalError as error:
+
+            db.session.rollback()
+
+            print(
+                f"⚠️ Database read attempt "
+                f"{attempt}/{DATABASE_READ_RETRIES} failed."
+            )
+
+            print(
+                f"   {error}"
+            )
+
+            if attempt < DATABASE_READ_RETRIES:
+
+                time.sleep(
+                    DATABASE_RETRY_DELAY_SECONDS
+                )
+
+        except SQLAlchemyError as error:
+
+            db.session.rollback()
+
+            print(
+                f"⚠️ Database error while checking "
+                f"email notifications: {error}"
+            )
+
+            if attempt < DATABASE_READ_RETRIES:
+
+                time.sleep(
+                    DATABASE_RETRY_DELAY_SECONDS
+                )
+
+        except Exception as error:
+
+            db.session.rollback()
+
+            print(
+                f"❌ Unexpected error while getting "
+                f"due email notifications: {error}"
+            )
+
+            break
+
+    return []
+
+
+# ============================================================
 # SEND DUE EMAIL NOTIFICATIONS
 # ============================================================
 #
-# This function is called by scheduler.py every 30 seconds.
+# scheduler.py calls this function every 30 seconds.
 #
-# It uses get_due_push_items() from notification_service.py
-# so the email notification is based on the SAME due
-# notification data used by the push notification system.
+# Flow:
+#
+# Reminder becomes due
+#       ↓
+# scheduler checks
+#       ↓
+# this function gets the same due item used by push
+#       ↓
+# email is attempted immediately
+#       ↓
+# SUCCESS → record delivery → never send duplicate
+# FAILURE → do NOT record success
+#       ↓
+# next 30-second scheduler cycle retries
+#
+# This gives the email path repeated opportunities to deliver
+# instead of losing the notification after one failed attempt.
+#
+# A normal successful SMTP delivery should therefore happen
+# during the first available 30-second check. The retry mechanism
+# continues beyond five minutes if an external service is
+# temporarily unavailable; we do not deliberately discard an
+# unsent reminder after five minutes.
 #
 # ============================================================
 
-
 def send_due_email_notifications():
 
-    print("📧 Checking due email notifications...")
     print(
-        f"   Recipient: {DEFAULT_RECIPIENT_EMAIL}"
+        "📧 Checking due email notifications..."
     )
 
     if not smtp_configuration_ready():
@@ -610,44 +682,35 @@ def send_due_email_notifications():
 
         return
 
-    try:
+    items = get_due_items_safely()
 
-        # ----------------------------------------------------
-        # Get the same due notification items used by
-        # the existing push notification system.
-        # ----------------------------------------------------
-
-        items = get_due_push_items()
+    if not items:
 
         print(
-            f"📧 Due notification items found: {len(items)}"
+            "📧 No due email notifications."
         )
 
-        if not items:
+        return
 
-            print(
-                "📧 No due email notifications."
-            )
+    print(
+        f"📧 Due notification items found: "
+        f"{len(items)}"
+    )
 
-            return
+    for alarm, user_id, payload in items:
 
-        # ----------------------------------------------------
-        # Process every due notification.
-        # ----------------------------------------------------
+        alarm_id = payload.get(
+            "id"
+        )
 
-        for alarm, user_id, payload in items:
+        if not alarm_id:
 
-            alarm_id = payload.get(
-                "id"
-            )
+            continue
 
-            if not alarm_id:
-
-                continue
+        try:
 
             # ------------------------------------------------
-            # Check whether this notification already sent
-            # an email.
+            # DUPLICATE PROTECTION
             # ------------------------------------------------
 
             delivery = get_email_delivery(
@@ -667,15 +730,9 @@ def send_due_email_notifications():
                 "type"
             )
 
-            print(
-                f"📧 Processing alarm {alarm_id} "
-                f"(type={notification_type}) "
-                f"for {DEFAULT_RECIPIENT_EMAIL}"
-            )
-
-            # =================================================
-            # REMINDER EMAIL
-            # =================================================
+            # ------------------------------------------------
+            # REMINDER
+            # ------------------------------------------------
 
             if notification_type == "reminder":
 
@@ -718,23 +775,17 @@ def send_due_email_notifications():
                 )
 
                 success = send_reminder_email(
-
                     title=title,
-
                     body=body,
-
                     recipient=DEFAULT_RECIPIENT_EMAIL,
-
                     date_text=date_text,
-
                     time_text=time_text,
-
                     place=place
                 )
 
-            # =================================================
-            # BIRTHDAY EMAIL
-            # =================================================
+            # ------------------------------------------------
+            # BIRTHDAY
+            # ------------------------------------------------
 
             elif notification_type == "birthday":
 
@@ -773,15 +824,10 @@ def send_due_email_notifications():
                 )
 
                 success = send_birthday_email(
-
                     name=name,
-
                     body=body,
-
                     recipient=DEFAULT_RECIPIENT_EMAIL,
-
                     date_text=date_text,
-
                     time_text=time_text
                 )
 
@@ -795,15 +841,13 @@ def send_due_email_notifications():
                 continue
 
             # ------------------------------------------------
-            # RECORD SUCCESSFUL EMAIL DELIVERY
+            # SUCCESS
             # ------------------------------------------------
 
             if success:
 
-                delivery = (
-                    get_or_create_email_delivery(
-                        alarm_id
-                    )
+                delivery = get_or_create_email_delivery(
+                    alarm_id
                 )
 
                 if delivery:
@@ -815,110 +859,53 @@ def send_due_email_notifications():
                     db.session.commit()
 
                     print(
-                        f"✅ Email delivery recorded successfully "
+                        f"📧 Email delivery recorded "
                         f"for alarm {alarm_id}."
                     )
 
-            else:
+                else:
 
-                # ------------------------------------------------
-                # IMPORTANT:
-                #
-                # We do NOT create a successful delivery record
-                # when sending fails.
-                #
-                # The next scheduler cycle can therefore retry.
-                # ------------------------------------------------
+                    # The email was already sent successfully.
+                    # Do not send it a second time just because
+                    # the tracking record could not be created.
+                    print(
+                        f"⚠️ Email was sent for alarm "
+                        f"{alarm_id}, but delivery tracking "
+                        f"could not be created."
+                    )
+
+            # ------------------------------------------------
+            # FAILURE → RETRY NEXT 30-SECOND CYCLE
+            # ------------------------------------------------
+
+            else:
 
                 db.session.rollback()
 
                 print(
                     f"⚠️ Email failed for alarm "
-                    f"{alarm_id}. Will retry."
+                    f"{alarm_id}. "
+                    f"Will retry on the next 30-second check."
                 )
 
-    except Exception as error:
+        except Exception as error:
 
-        print(
-            "❌ Email scheduler error:"
-        )
+            db.session.rollback()
 
-        print(
-            f"   {error}"
-        )
+            print(
+                f"❌ Email processing error for "
+                f"alarm {alarm_id}: {error}"
+            )
 
-        db.session.rollback()
-
-
-# ============================================================
-# FORMAT DATE FOR EMAIL
-# ============================================================
-
-
-def format_email_date(
-    value
-):
-
-    if not value:
-
-        return ""
-
-    try:
-
-        parsed = datetime.strptime(
-            str(value),
-            "%Y-%m-%d"
-        )
-
-        return parsed.strftime(
-            "%d %B %Y"
-        )
-
-    except Exception:
-
-        return str(value)
-
-
-# ============================================================
-# FORMAT TIME FOR EMAIL
-# ============================================================
-
-
-def format_email_time(
-    value
-):
-
-    if not value:
-
-        return ""
-
-    try:
-
-        parsed = datetime.strptime(
-            str(value),
-            "%H:%M"
-        )
-
-        return parsed.strftime(
-            "%I:%M %p"
-        )
-
-    except Exception:
-
-        return str(value)
+            print(
+                "   The next 30-second scheduler cycle "
+                "will retry."
+            )
 
 
 # ============================================================
 # MANUAL TEST EMAIL
 # ============================================================
-#
-# This function is NOT automatically executed.
-#
-# It can be used later if we want a dedicated SMTP
-# test endpoint.
-#
-# ============================================================
-
 
 def send_test_email(
     recipient=None
