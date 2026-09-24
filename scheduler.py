@@ -9,6 +9,10 @@ from email_service import (
     send_due_email_notifications
 )
 
+from resend_email_service import (
+    send_due_resend_notifications
+)
+
 
 def check_reminders(app):
     with app.app_context():
@@ -65,6 +69,31 @@ def check_reminders(app):
             )
 
         # --------------------------------------------------------
+        # RESEND HTTPS EMAIL NOTIFICATION CHECK
+        # --------------------------------------------------------
+        resend_start = time.time()
+
+        try:
+            send_due_resend_notifications()
+
+            resend_duration = time.time() - resend_start
+
+            print(
+                f"📨 Resend email notification check completed "
+                f"in {resend_duration:.2f}s."
+            )
+
+        except Exception as error:
+            resend_duration = time.time() - resend_start
+
+            print("❌ Resend email notification error:")
+            print(f"   {error}")
+            print(
+                f"   Resend check stopped after "
+                f"{resend_duration:.2f}s."
+            )
+
+        # --------------------------------------------------------
         # TOTAL SCHEDULER EXECUTION TIME
         # --------------------------------------------------------
         total_duration = time.time() - push_start
@@ -96,5 +125,6 @@ def start_scheduler(app):
     print("⏰ Reminder scheduler started.")
     print("📱 Web Push background notifications enabled.")
     print("📧 SMTP email notification scheduler enabled.")
+    print("📨 Resend HTTPS email notification scheduler enabled.")
 
     return scheduler
