@@ -14,117 +14,172 @@ from resend_email_service import (
 )
 
 
-def check_reminders(app):
-    with app.app_context():
-        print("⏰ Checking reminders...")
+# ============================================================
+# PUSH NOTIFICATION JOB
+# ============================================================
 
-        # --------------------------------------------------------
-        # PUSH NOTIFICATION CHECK
-        # --------------------------------------------------------
-        push_start = time.time()
+def check_push_notifications(app):
+    with app.app_context():
+
+        print("📱 Checking push notifications...")
+
+        start_time = time.time()
 
         try:
             send_due_push_notifications()
 
-            push_duration = time.time() - push_start
+            duration = time.time() - start_time
 
             print(
                 f"✅ Push notification check completed "
-                f"in {push_duration:.2f}s."
+                f"in {duration:.2f}s."
             )
 
         except Exception as error:
-            push_duration = time.time() - push_start
+
+            duration = time.time() - start_time
 
             print("❌ Push notification error:")
             print(f"   {error}")
             print(
                 f"   Push check stopped after "
-                f"{push_duration:.2f}s."
+                f"{duration:.2f}s."
             )
 
-        # --------------------------------------------------------
-        # EMAIL / SMTP NOTIFICATION CHECK
-        # --------------------------------------------------------
-        email_start = time.time()
+
+# ============================================================
+# GMAIL SMTP EMAIL JOB
+# ============================================================
+
+def check_smtp_email_notifications(app):
+    with app.app_context():
+
+        print("📧 Checking Gmail SMTP email notifications...")
+
+        start_time = time.time()
 
         try:
             send_due_email_notifications()
 
-            email_duration = time.time() - email_start
+            duration = time.time() - start_time
 
             print(
-                f"📧 Email notification check completed "
-                f"in {email_duration:.2f}s."
+                f"✅ Gmail SMTP email check completed "
+                f"in {duration:.2f}s."
             )
 
         except Exception as error:
-            email_duration = time.time() - email_start
 
-            print("❌ Email notification error:")
+            duration = time.time() - start_time
+
+            print("❌ Gmail SMTP email error:")
             print(f"   {error}")
             print(
-                f"   Email check stopped after "
-                f"{email_duration:.2f}s."
+                f"   Gmail SMTP check stopped after "
+                f"{duration:.2f}s."
             )
 
-        # --------------------------------------------------------
-        # RESEND HTTPS EMAIL NOTIFICATION CHECK
-        # --------------------------------------------------------
-        resend_start = time.time()
+
+# ============================================================
+# RESEND EMAIL JOB
+# ============================================================
+
+def check_resend_email_notifications(app):
+    with app.app_context():
+
+        print("📨 Checking Resend email notifications...")
+
+        start_time = time.time()
 
         try:
             send_due_resend_notifications()
 
-            resend_duration = time.time() - resend_start
+            duration = time.time() - start_time
 
             print(
-                f"📨 Resend email notification check completed "
-                f"in {resend_duration:.2f}s."
+                f"✅ Resend email check completed "
+                f"in {duration:.2f}s."
             )
 
         except Exception as error:
-            resend_duration = time.time() - resend_start
 
-            print("❌ Resend email notification error:")
+            duration = time.time() - start_time
+
+            print("❌ Resend email error:")
             print(f"   {error}")
             print(
                 f"   Resend check stopped after "
-                f"{resend_duration:.2f}s."
+                f"{duration:.2f}s."
             )
 
-        # --------------------------------------------------------
-        # TOTAL SCHEDULER EXECUTION TIME
-        # --------------------------------------------------------
-        total_duration = time.time() - push_start
 
-        print(
-            f"⏱️ Total reminder check completed "
-            f"in {total_duration:.2f}s."
-        )
-
+# ============================================================
+# START SCHEDULER
+# ============================================================
 
 def start_scheduler(app):
+
     scheduler = BackgroundScheduler(
         timezone="Asia/Kolkata"
     )
 
+    # --------------------------------------------------------
+    # PUSH JOB
+    # --------------------------------------------------------
+
     scheduler.add_job(
-        func=check_reminders,
+        func=check_push_notifications,
         args=[app],
         trigger="interval",
         seconds=30,
-        id="reminder_checker",
+        id="push_notification_checker",
         replace_existing=True,
         max_instances=1,
-        coalesce=True
+        coalesce=True,
+        misfire_grace_time=120
     )
+
+    # --------------------------------------------------------
+    # GMAIL SMTP JOB
+    # --------------------------------------------------------
+
+    scheduler.add_job(
+        func=check_smtp_email_notifications,
+        args=[app],
+        trigger="interval",
+        seconds=30,
+        id="smtp_email_checker",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=120
+    )
+
+    # --------------------------------------------------------
+    # RESEND JOB
+    # --------------------------------------------------------
+
+    scheduler.add_job(
+        func=check_resend_email_notifications,
+        args=[app],
+        trigger="interval",
+        seconds=30,
+        id="resend_email_checker",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=120
+    )
+
+    # --------------------------------------------------------
+    # START
+    # --------------------------------------------------------
 
     scheduler.start()
 
     print("⏰ Reminder scheduler started.")
     print("📱 Web Push background notifications enabled.")
-    print("📧 SMTP email notification scheduler enabled.")
-    print("📨 Resend HTTPS email notification scheduler enabled.")
+    print("📧 Gmail SMTP email scheduler enabled.")
+    print("📨 Resend HTTPS email scheduler enabled.")
 
     return scheduler
