@@ -37,10 +37,7 @@ RESEND_FROM_NAME = os.environ.get(
     "Bday Reminder"
 ).strip()
 
-RESEND_RECIPIENT_EMAIL = os.environ.get(
-    "REMINDER_EMAIL",
-    "visakanreminder@gmail.com"
-).strip()
+RESEND_RECIPIENT_EMAIL = "delivered@resend.dev"
 
 
 # ============================================================
