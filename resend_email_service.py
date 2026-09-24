@@ -475,18 +475,11 @@ def send_resend_email(subject, html):
 
 def send_due_resend_notifications():
     """
-    Check the same due notification queue used by the
-    existing notification system.
+    Check the same due notification queue used by
+    the existing notification system.
 
-    IMPORTANT:
-    This function has its OWN delivery records.
-
-    Therefore:
-        Gmail SMTP success
-        +
-        Resend success
-
-    are tracked independently.
+    Resend has its own delivery tracking, so Gmail SMTP
+    and Resend operate independently.
     """
 
     print("📨 Checking due Resend email notifications...")
@@ -496,25 +489,27 @@ def send_due_resend_notifications():
         return
 
     try:
-
-        # Import here to avoid circular imports during startup.
         from notification_service import get_due_push_items
 
-        due_items = get_due_push_items()
+        items = get_due_push_items()
 
-        if not due_items:
+        if not items:
             print("📭 No due Resend email notifications.")
             return
 
         print(
-            f"📬 Found {len(due_items)} due "
+            f"📬 Found {len(items)} due "
             f"notification(s) for Resend."
         )
 
-        for item in due_items:
+        # IMPORTANT:
+        # get_due_push_items() returns:
+        # (alarm, user_id, payload)
 
-            alarm_id = item.get("id")
-            notification_type = item.get("type")
+        for alarm, user_id, payload in items:
+
+            alarm_id = payload.get("id")
+            notification_type = payload.get("type")
 
             if not alarm_id:
                 print("⚠️ Skipping notification without alarm ID.")
@@ -522,13 +517,16 @@ def send_due_resend_notifications():
 
             try:
 
+                # ------------------------------------------------
+                # CHECK RESEND DELIVERY ONLY
+                # ------------------------------------------------
+
                 delivery = get_resend_delivery(alarm_id)
 
-                # Already successfully sent through Resend.
                 if delivery and delivery.last_sent_at:
                     print(
-                        f"⏭️ Resend already sent for alarm "
-                        f"{alarm_id}. Skipping."
+                        f"📨 Resend email already sent "
+                        f"for alarm {alarm_id}."
                     )
                     continue
 
@@ -538,11 +536,15 @@ def send_due_resend_notifications():
 
                 if notification_type == "reminder":
 
-                    subject, html = build_reminder_email(item)
+                    subject, html = build_reminder_email(
+                        payload
+                    )
 
                 elif notification_type == "birthday":
 
-                    subject, html = build_birthday_email(item)
+                    subject, html = build_birthday_email(
+                        payload
+                    )
 
                 else:
 
@@ -553,7 +555,7 @@ def send_due_resend_notifications():
                     continue
 
                 # ------------------------------------------------
-                # SEND
+                # SEND THROUGH RESEND
                 # ------------------------------------------------
 
                 success, message_id = send_resend_email(
@@ -567,21 +569,20 @@ def send_due_resend_notifications():
                         alarm_id
                     )
 
-                    delivery.resend_message_id = message_id
-                    delivery.last_sent_at = datetime.utcnow()
+                    if delivery:
 
-                    db.session.commit()
+                        delivery.resend_message_id = message_id
+                        delivery.last_sent_at = datetime.utcnow()
 
-                    print(
-                        f"✅ Resend delivery recorded "
-                        f"for alarm {alarm_id}."
-                    )
+                        db.session.commit()
+
+                        print(
+                            f"✅ Resend delivery recorded "
+                            f"for alarm {alarm_id}."
+                        )
 
                 else:
 
-                    # Do NOT mark as sent.
-                    # The next 30-second scheduler cycle
-                    # will retry it.
                     db.session.rollback()
 
                     print(
@@ -605,8 +606,6 @@ def send_due_resend_notifications():
 
         print("❌ Resend notification check failed:")
         print(f"   {error}")
-
-
 # ============================================================
 # TEST EMAIL
 # ============================================================
