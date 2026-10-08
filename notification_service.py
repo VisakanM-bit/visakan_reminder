@@ -23,6 +23,10 @@ from database.models import (
     PushSubscription
 )
 
+from notification_event import (
+    create_notification_event
+)
+
 
 # ============================================================
 # BLUEPRINT
@@ -682,6 +686,16 @@ def get_due_push_items():
             reminder
         )
 
+        # ----------------------------------------------------
+        # CREATE CENTRAL NOTIFICATION EVENT
+        # ----------------------------------------------------
+
+        create_notification_event(
+            alarm=alarm,
+            user_id=reminder.user_id,
+            payload=payload
+        )
+
         items.append(
             (
                 alarm,
@@ -748,6 +762,16 @@ def get_due_push_items():
             alarm,
             birthday,
             occurrence
+        )
+
+        # ----------------------------------------------------
+        # CREATE CENTRAL NOTIFICATION EVENT
+        # ----------------------------------------------------
+
+        create_notification_event(
+            alarm=alarm,
+            user_id=birthday.user_id,
+            payload=payload
         )
 
         items.append(
