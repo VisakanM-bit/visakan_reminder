@@ -18,6 +18,12 @@ from datetime import datetime
 
 from database import db
 
+from notification_event import (
+    get_notification_event,
+    mark_resend_sent,
+    mark_resend_failed
+)
+
 
 # ============================================================
 # RESEND CONFIGURATION
@@ -518,15 +524,22 @@ def send_due_resend_notifications():
             try:
 
                 # ------------------------------------------------
-                # CHECK RESEND DELIVERY ONLY
+                # CHECK CENTRAL NOTIFICATION EVENT
                 # ------------------------------------------------
 
-                delivery = get_resend_delivery(alarm_id)
+                event = get_notification_event(alarm_id)
 
-                if delivery and delivery.last_sent_at:
+                if not event:
                     print(
-                        f"📨 Resend email already sent "
+                        f"⚠️ No NotificationEvent found "
                         f"for alarm {alarm_id}."
+                    )
+                    continue
+
+                if event.resend_status == "SENT":
+                    print(
+                        f"📨 Resend already sent for "
+                        f"notification event {event.id}."
                     )
                     continue
 
@@ -565,6 +578,10 @@ def send_due_resend_notifications():
 
                 if success:
 
+                    mark_resend_sent(
+                        event
+                    )
+
                     delivery = get_or_create_resend_delivery(
                         alarm_id
                     )
@@ -576,14 +593,26 @@ def send_due_resend_notifications():
 
                         db.session.commit()
 
-                        print(
-                            f"✅ Resend delivery recorded "
-                            f"for alarm {alarm_id}."
-                        )
+                    print(
+                        f"✅ Resend delivery recorded "
+                        f"for notification event {event.id}."
+                    )
 
                 else:
 
                     db.session.rollback()
+
+                    try:
+                        mark_resend_failed(
+                            event,
+                            "Resend HTTPS delivery failed."
+                        )
+                    except Exception as tracking_error:
+                        db.session.rollback()
+                        print(
+                            f"⚠️ Could not record Resend failure: "
+                            f"{tracking_error}"
+                        )
 
                     print(
                         f"🔁 Resend will retry alarm "
