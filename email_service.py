@@ -38,6 +38,12 @@ from database import db
 
 from notification_service import get_due_push_items
 
+from notification_event import (
+    get_notification_event,
+    mark_gmail_sent,
+    mark_gmail_failed
+)
+
 
 # ============================================================
 # CONFIGURATION
@@ -713,15 +719,24 @@ def send_due_email_notifications():
             # DUPLICATE PROTECTION
             # ------------------------------------------------
 
-            delivery = get_email_delivery(
+            event = get_notification_event(
                 alarm_id
             )
 
-            if delivery and delivery.last_sent_at:
+            if not event:
 
                 print(
-                    f"📧 Email already sent for "
-                    f"alarm {alarm_id}."
+                    f"⚠️ No NotificationEvent found "
+                    f"for alarm {alarm_id}."
+                )
+
+                continue
+
+            if event.gmail_status == "SENT":
+
+                print(
+                    f"📧 Gmail already sent for "
+                    f"notification event {event.id}."
                 )
 
                 continue
@@ -846,6 +861,10 @@ def send_due_email_notifications():
 
             if success:
 
+                mark_gmail_sent(
+                    event
+                )
+
                 delivery = get_or_create_email_delivery(
                     alarm_id
                 )
@@ -858,21 +877,10 @@ def send_due_email_notifications():
 
                     db.session.commit()
 
-                    print(
-                        f"📧 Email delivery recorded "
-                        f"for alarm {alarm_id}."
-                    )
-
-                else:
-
-                    # The email was already sent successfully.
-                    # Do not send it a second time just because
-                    # the tracking record could not be created.
-                    print(
-                        f"⚠️ Email was sent for alarm "
-                        f"{alarm_id}, but delivery tracking "
-                        f"could not be created."
-                    )
+                print(
+                    f"📧 Gmail delivery recorded "
+                    f"for notification event {event.id}."
+                )
 
             # ------------------------------------------------
             # FAILURE → RETRY NEXT 30-SECOND CYCLE
@@ -881,6 +889,22 @@ def send_due_email_notifications():
             else:
 
                 db.session.rollback()
+
+                try:
+
+                    mark_gmail_failed(
+                        event,
+                        "Gmail SMTP delivery failed."
+                    )
+
+                except Exception as tracking_error:
+
+                    db.session.rollback()
+
+                    print(
+                        f"⚠️ Could not record Gmail failure: "
+                        f"{tracking_error}"
+                    )
 
                 print(
                     f"⚠️ Email failed for alarm "
