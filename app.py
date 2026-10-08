@@ -68,7 +68,8 @@ from database import db
 from database.models import (
     User,
     Birthday,
-    Reminder
+    Reminder,
+    PushSubscription
 )
 
 
@@ -506,6 +507,204 @@ def database_health():
             "success": False,
             "error": str(error)
         }), 500
+
+# ============================================================
+# WEB PUSH API
+# ============================================================
+#
+# These endpoints are used by static/js/pwa.js.
+#
+# Browser flow:
+#
+# Service worker registration
+#        ↓
+# VAPID public key
+#        ↓
+# Browser PushSubscription
+#        ↓
+# Save subscription in push_subscriptions
+#
+# The application uses the permanent account automatically.
+# ============================================================
+
+
+@app.route(
+    "/api/push/vapid-public-key",
+    methods=["GET"]
+)
+@login_required
+def get_vapid_public_key():
+
+    public_key = os.environ.get(
+        "VAPID_PUBLIC_KEY",
+        ""
+    ).strip()
+
+    if not public_key:
+
+        app.logger.error(
+            "WEB PUSH ERROR: VAPID_PUBLIC_KEY is not configured."
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "VAPID public key is not configured."
+        }), 500
+
+    return jsonify({
+        "success": True,
+        "publicKey": public_key
+    })
+
+
+@app.route(
+    "/api/push/subscribe",
+    methods=["POST"]
+)
+@login_required
+def save_push_subscription():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    endpoint = str(
+        data.get(
+            "endpoint",
+            ""
+        )
+    ).strip()
+
+    keys = data.get(
+        "keys",
+        {}
+    ) or {}
+
+    p256dh = str(
+        keys.get(
+            "p256dh",
+            ""
+        )
+    ).strip()
+
+    auth = str(
+        keys.get(
+            "auth",
+            ""
+        )
+    ).strip()
+
+    # --------------------------------------------------------
+    # Validate browser subscription
+    # --------------------------------------------------------
+
+    if not endpoint:
+
+        return jsonify({
+            "success": False,
+            "error": "Push subscription endpoint is missing."
+        }), 400
+
+    if not p256dh:
+
+        return jsonify({
+            "success": False,
+            "error": "Push subscription p256dh key is missing."
+        }), 400
+
+    if not auth:
+
+        return jsonify({
+            "success": False,
+            "error": "Push subscription auth key is missing."
+        }), 400
+
+    # --------------------------------------------------------
+    # Always save against the permanent application account.
+    # --------------------------------------------------------
+
+    try:
+
+        user = permanent_user()
+
+        # ----------------------------------------------------
+        # Reuse an existing endpoint if this browser/device
+        # has already subscribed.
+        # ----------------------------------------------------
+
+        subscription = (
+            PushSubscription.query
+            .filter_by(
+                endpoint=endpoint
+            )
+            .first()
+        )
+
+        if subscription:
+
+            subscription.user_id = user.id
+            subscription.p256dh = p256dh
+            subscription.auth = auth
+            subscription.active = True
+
+            db.session.commit()
+
+            app.logger.info(
+                "WEB PUSH SUBSCRIPTION UPDATED: id=%s user_id=%s",
+                subscription.id,
+                user.id
+            )
+
+            return jsonify({
+                "success": True,
+                "message": "Push subscription updated.",
+                "id": subscription.id
+            })
+
+        # ----------------------------------------------------
+        # New browser/device subscription.
+        # ----------------------------------------------------
+
+        subscription = PushSubscription(
+            user_id=user.id,
+            endpoint=endpoint,
+            p256dh=p256dh,
+            auth=auth,
+            active=True
+        )
+
+        db.session.add(
+            subscription
+        )
+
+        db.session.commit()
+
+        app.logger.info(
+            "WEB PUSH SUBSCRIPTION SAVED: id=%s user_id=%s",
+            subscription.id,
+            user.id
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Push subscription saved.",
+            "id": subscription.id
+        })
+
+    except Exception as error:
+
+        db.session.rollback()
+
+        app.logger.exception(
+            "WEB PUSH SUBSCRIPTION SAVE FAILED: %s",
+            error
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "Unable to save push subscription."
+        }), 500
+
 
 # ============================================================
 # DASHBOARD
