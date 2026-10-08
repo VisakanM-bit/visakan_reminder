@@ -74,13 +74,18 @@
 
         const response =
             await fetch(
-                "/api/push/vapid-public-key"
+                "/api/push/vapid-public-key",
+                {
+                    method: "GET",
+                    credentials: "same-origin"
+                }
             );
 
         if (!response.ok) {
 
             throw new Error(
-                "Unable to get VAPID public key."
+                "Unable to get VAPID public key. HTTP " +
+                response.status
             );
 
         }
@@ -94,6 +99,7 @@
         ) {
 
             throw new Error(
+                data.error ||
                 "VAPID public key is not configured."
             );
 
@@ -120,6 +126,9 @@
                 {
                     method: "POST",
 
+                    credentials:
+                        "same-origin",
+
                     headers: {
                         "Content-Type":
                             "application/json"
@@ -134,8 +143,29 @@
 
         if (!response.ok) {
 
+            let errorMessage =
+                "Unable to save push subscription. HTTP " +
+                response.status;
+
+            try {
+
+                const errorData =
+                    await response.json();
+
+                if (errorData.error) {
+
+                    errorMessage =
+                        errorData.error;
+
+                }
+
+            } catch (error) {
+
+                // Keep the HTTP status error.
+            }
+
             throw new Error(
-                "Unable to save push subscription."
+                errorMessage
             );
 
         }
@@ -155,6 +185,8 @@
         console.log(
             "PWA: Push subscription saved successfully."
         );
+
+        return data;
     }
 
 
@@ -274,6 +306,19 @@
     // ========================================================
     // REGISTER SERVICE WORKER
     // ========================================================
+    //
+    // IMPORTANT:
+    //
+    // service-worker.js is physically inside /static/.
+    // Therefore Chrome only allows it to control the
+    // /static/ scope unless the server sends a
+    // Service-Worker-Allowed header.
+    //
+    // We intentionally use /static/ here so the existing
+    // Flask/static structure works without changing the
+    // service-worker file location or server headers.
+    //
+    // ========================================================
 
     window.addEventListener(
         "load",
@@ -285,7 +330,7 @@
                     await navigator.serviceWorker.register(
                         "/static/service-worker.js",
                         {
-                            scope: "/"
+                            scope: "/static/"
                         }
                     );
 
